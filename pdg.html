@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Yun Spa PDG – Đặt lịch KTV</title>
+<style>
+:root{
+  --bg:#fbf6f8;--card:#fff;--ink:#22302b;--mute:#6b7772;--line:#eedde5;
+  --brand:#EF4395;--accent:#d22f7c;--accent-2:#fde8f2;--warn:#b8432f;--warn-bg:#fdf0ec;
+  --ok:#2e7d4f;--ok-bg:#ebf6ef;--amber:#a76a10;--amber-bg:#fdf5e6;
+  --r:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 "Times New Roman",Times,serif}
+button,input,select,textarea{font:inherit;color:inherit}
+[hidden]{display:none!important}
+header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:6px 20px;background:var(--brand);color:#fff}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{height:56px;width:auto;display:block}
+@media (max-width:600px){.logo{height:44px}}
+.branch{font-size:15px;letter-spacing:.04em;text-transform:uppercase}
+.brand span{font-size:16px;opacity:.95;letter-spacing:.02em;border-left:1px solid rgba(255,255,255,.5);padding-left:10px}
+.tabs{display:flex;gap:4px;background:rgba(255,255,255,.1);padding:3px;border-radius:10px}
+.tabs button{border:0;background:transparent;color:#fff;padding:6px 14px;border-radius:8px;cursor:pointer;opacity:.8}
+.tabs button.on{background:#fff;color:var(--brand);opacity:1;font-weight:600}
+.sync{margin-left:auto;font-size:12px;opacity:.8}
+main{padding:16px 20px 40px;max-width:1500px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.daybar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.daybar input{padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.btn{border:1px solid var(--line);background:#fff;padding:7px 12px;border-radius:8px;cursor:pointer}
+.btn:hover{border-color:#c9c2b3}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.primary:disabled{opacity:.45;cursor:not-allowed}
+.btn.danger{color:var(--warn);border-color:#efc9bf}
+.btn.small{padding:4px 9px;font-size:13px}
+.daystats{color:var(--mute);margin-left:6px}
+.daytitle{font-size:18px;font-weight:700}
+.layout{display:grid;grid-template-columns:360px 1fr;gap:16px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:1fr}}
+.layout>*{min-width:0}
+@media (max-width:600px){main{padding:12px 10px 40px}header{padding:10px 12px}.sync{margin-left:0}}
+form h2,.card h2{margin:0 0 12px;font-size:16px}
+.field{margin-bottom:11px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--mute);margin-bottom:4px;text-transform:uppercase;letter-spacing:.03em}
+.field input,.field select,.field textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.field textarea{resize:vertical;min-height:38px}
+.stp{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:20px;padding:0 5px;margin-right:6px;border-radius:10px;background:var(--brand);color:#fff;font-style:normal;font-size:11px;font-weight:700;letter-spacing:0}
+.stp.opt{background:#d9cdd3}
+.req{color:var(--warn);font-style:normal;font-weight:700}
+.optl{text-transform:none;letter-spacing:0;font-weight:400}
+.field.need input,.field.need select{border-color:var(--warn);background:var(--warn-bg)}
+.addpart{margin:-2px 0 12px;border-style:dashed;color:var(--accent);border-color:var(--accent)}
+.xp{border:1px dashed var(--accent);border-radius:10px;padding:10px;margin-bottom:10px;background:var(--accent-2)}
+.xp-h{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;text-transform:uppercase;color:var(--mute);margin-bottom:6px}
+.xp select{width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff;margin-bottom:6px}
+.xp-note{font-size:12px;color:var(--mute);margin-top:-2px}
+.combo-list{margin:6px 0 0;padding-left:0;list-style:none}
+.combo-list li{padding:3px 0}
+.combo-list li.badp{color:#7d2a1b;font-weight:600}
+.tag-grp{display:inline-block;background:var(--accent-2);color:var(--accent);font-size:11px;font-weight:700;padding:0 6px;border-radius:8px;margin-left:4px}
+.missing{flex-basis:100%;font-size:13px;color:var(--warn);min-height:0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.check{border-radius:10px;padding:11px 12px;margin:4px 0 12px;font-size:13.5px}
+.check.ok{background:var(--ok-bg);color:#1f5a38}
+.check.bad{background:var(--warn-bg);color:#7d2a1b}
+.check.amber{background:var(--amber-bg);color:#6e470b}
+.check b{font-weight:600}
+.check .ttl{font-weight:700;margin-bottom:4px}
+.check ul{margin:4px 0 0;padding-left:18px}
+.reco{background:#fff;border:1px solid #efc9bf;border-radius:10px;padding:10px 11px;margin-top:9px;color:var(--ink)}
+.recobtn{display:block;width:100%;margin-top:8px;background:var(--accent);color:#fff;border:0;border-radius:8px;padding:9px 10px;font-weight:600;cursor:pointer}
+.reco2{margin-top:7px;font-size:13px;color:var(--mute)}
+.linkbtn{border:0;background:none;color:var(--accent);font-weight:600;text-decoration:underline;cursor:pointer;padding:0}
+.sg-h{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;margin:10px 0 5px;color:var(--ink);opacity:.75}
+.sg{display:flex;flex-wrap:wrap;gap:6px}
+.sg button{border:1px solid var(--accent);background:#fff;color:var(--accent);border-radius:20px;padding:5px 11px;cursor:pointer;font-size:13px}
+.sg button:hover{background:var(--accent);color:#fff}
+.sg button.best{background:var(--accent);color:#fff}
+.sg button small{opacity:.75;margin-left:3px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.editing-tag{display:inline-block;background:var(--amber-bg);color:var(--amber);font-size:12px;padding:2px 8px;border-radius:10px;margin-left:6px;font-weight:600}
+.hint{font-size:12.5px;color:var(--mute);margin-top:10px}
+/* timeline */
+.tl-wrap{overflow:auto;max-height:74vh;border:1px solid var(--line);border-radius:10px}
+.tl{display:grid;min-width:max-content}
+.tl-head{position:sticky;top:0;z-index:5;background:#fdf4f8;border-bottom:1px solid var(--line)}
+.tl-head .hc{padding:8px 6px;text-align:center;border-left:1px solid var(--line)}
+.hc .n{font-weight:600}
+.hc .m{font-size:11px;color:var(--mute)}
+.gut{position:sticky;left:0;z-index:4;background:#fdf4f8}
+.tl-head .gut{z-index:6}
+.hours{position:relative;border-right:1px solid var(--line)}
+.hours div{position:absolute;right:6px;font-size:11px;color:var(--mute);transform:translateY(-7px)}
+.hours div:first-child{transform:translateY(2px)}
+.col{position:relative;border-left:1px solid var(--line);cursor:copy}
+.blk{z-index:2;position:absolute;left:3px;right:3px;border-radius:7px;padding:3px 6px;font-size:11.5px;line-height:1.25;overflow:hidden;cursor:pointer;color:#1d2a26;border:1px solid rgba(0,0,0,.08)}
+.blk .t{font-weight:700}
+.blk.clash{outline:2px solid var(--warn)}
+.buf{z-index:2;position:absolute;left:3px;right:3px;border-radius:0 0 7px 7px;background:repeating-linear-gradient(135deg,rgba(0,0,0,.06) 0 4px,transparent 4px 8px);pointer-events:none}
+.ghost{z-index:3;position:absolute;left:3px;right:3px;border-radius:7px;border:2px dashed var(--ok);background:rgba(46,125,79,.1);pointer-events:none;font-size:11px;padding:3px 6px;color:var(--ok);font-weight:700}
+.ghost.bad{border-color:var(--warn);background:rgba(184,67,47,.1);color:var(--warn)}
+.nowline{position:absolute;left:0;right:0;height:2px;background:var(--warn);z-index:3;pointer-events:none}
+.tl-legend{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.tl-legend .mute{color:var(--mute);font-size:12.5px}
+/* list */
+table.list{width:100%;border-collapse:collapse;margin-top:16px;font-size:13.5px}
+.list th{text-align:left;font-size:12px;color:var(--mute);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line)}
+.list td{padding:7px 8px;border-bottom:1px solid #f6e9ef;vertical-align:top}
+.list tr.clash td{background:var(--warn-bg)}
+.empty{color:var(--mute);padding:20px;text-align:center}
+/* setup */
+.setup-grid{display:grid;grid-template-columns:minmax(300px,420px) 1fr;gap:16px;align-items:start}
+@media (max-width:1000px){.setup-grid{grid-template-columns:1fr}}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:12px;color:var(--mute);font-weight:600;text-align:left;padding:6px;border-bottom:1px solid var(--line)}
+.tbl td{padding:5px 6px;border-bottom:1px solid #f6e9ef}
+.tbl input[type=text],.tbl input[type=number]{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:7px}
+.mx-wrap{overflow:auto}
+.mx th.sv{writing-mode:vertical-rl;transform:rotate(180deg);height:110px;text-align:left;white-space:nowrap;padding:6px 4px}
+.mx td.c{text-align:center}
+.mx input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);cursor:pointer}
+.mx td.nm{min-width:120px}
+.x{border:0;background:none;color:var(--mute);cursor:pointer;font-size:16px;padding:2px 6px}
+.x:hover{color:var(--warn)}
+.savebar{position:sticky;bottom:0;margin-top:16px;background:var(--brand);color:#fff;border-radius:var(--r);padding:12px 16px;display:flex;align-items:center;gap:10px}
+.savebar .btn{border:0;font-weight:600}
+.savebar #discardCfg{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.8)}
+.savebar #discardCfg:hover{background:rgba(255,255,255,.15)}
+.banner{background:var(--amber-bg);color:#6e470b;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13.5px}
+.att{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:-4px 0 14px;background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:10px 12px}
+.att .lbl{font-size:12px;font-weight:700;color:var(--mute);text-transform:uppercase;letter-spacing:.03em;margin-right:4px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:20px;padding:4px 12px;cursor:pointer;font-size:13px}
+.chip.on{background:var(--ok-bg);border-color:#bfe0cb;color:#1f5a38;font-weight:600}
+.chip.off{background:#efefef;color:#9a9a9a;text-decoration:line-through}
+.chip.ov{box-shadow:inset 0 0 0 1px var(--amber)}
+.chip.half{background:var(--amber-bg);border-color:#ecd3a4;color:#6e470b;font-weight:600}
+.chip.sel{outline:2px solid var(--accent);outline-offset:1px}
+.chip.cur{background:var(--accent);border-color:var(--accent);color:#fff}
+.attpick{flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding-top:8px;margin-top:4px;border-top:1px dashed var(--line)}
+.outshift{position:absolute;left:0;right:0;background:repeating-linear-gradient(135deg,#ececec 0 6px,#f6f6f6 6px 12px);color:#999;font-size:11px;text-align:center;padding-top:4px;pointer-events:none;z-index:1}
+.att .mute{font-size:12px;color:var(--mute)}
+.hc.offc{background:#ededed;color:#888}
+.hc.offc .m{color:var(--warn);font-weight:600}
+.col.offc{background-color:#f1f1f1}
+.wk{display:flex;gap:2px}
+.wk button{width:26px;height:24px;border:1px solid var(--line);background:#fff;border-radius:5px;font-size:10.5px;cursor:pointer;padding:0;color:var(--mute)}
+.wk button{width:30px;height:28px;line-height:1}
+.wk button.off{background:#8a8a8a;color:#fff;border-color:#8a8a8a}
+.wk button.half{background:var(--amber-bg);color:#6e470b;border-color:#ecd3a4;font-weight:700}
+.wk button small{display:block;font-size:9px}
+.halfrow{display:grid;grid-template-columns:90px 1fr 1fr;gap:10px;align-items:end}
+.halfrow>b{padding-bottom:20px}
+.list tr.offrow td{background:#f3f3f3}
+.tag-off{display:inline-block;background:var(--warn-bg);color:var(--warn);font-size:11px;font-weight:700;padding:1px 7px;border-radius:9px;margin-left:4px}
+#gate{position:fixed;inset:0;z-index:100;background:var(--brand);display:flex;align-items:center;justify-content:center;padding:20px}
+#gate.ok{display:none}
+#gateForm{background:#fff;border-radius:16px;padding:26px 24px;width:100%;max-width:340px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.glogo{height:90px;border-radius:10px;margin-bottom:8px}
+.gt{font-size:16px;color:var(--mute)}.gb{font-size:20px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:16px}
+#gateForm label{display:block;text-align:left;font-size:13px;font-weight:600;color:var(--mute);margin-bottom:5px}
+#gatePw{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:18px;letter-spacing:.06em;text-align:center}
+#gateForm button{width:100%;margin-top:12px;background:var(--accent);color:#fff;border:0;border-radius:10px;padding:11px;font-weight:700;font-size:16px;cursor:pointer}
+#gateErr{color:var(--warn);font-size:14px;min-height:20px;margin-top:8px}
+.lockbtn{background:transparent;border:1px solid rgba(255,255,255,.7);color:#fff;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:13px;margin-left:8px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--brand);color:#fff;padding:10px 18px;border-radius:24px;font-size:13.5px;box-shadow:0 6px 20px rgba(0,0,0,.2);z-index:50;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div id="gate"><form id="gateForm" autocomplete="off">
+  <img class="glogo" alt="Yun Spa" src="data:image/png;base64,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">
+  <div class="gt">Đặt lịch KTV</div><div class="gb">Phan Đình Giót</div>
+  <label for="gatePw">Mật khẩu (hotline cơ sở)</label>
+  <input id="gatePw" type="tel" inputmode="numeric" placeholder="Nhập số hotline" autofocus>
+  <button type="submit">Vào</button>
+  <div id="gateErr"></div>
+</form></div>
+<header>
+  <div class="brand"><img src="data:image/png;base64,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" alt="Yun Spa" class="logo"><span>Đặt lịch KTV<br><b class="branch">Phan Đình Giót</b></span></div>
+  <nav class="tabs">
+    <button data-tab="book" class="on">Lịch hẹn</button>
+    <button data-tab="setup">KTV &amp; Dịch vụ</button>
+  </nav>
+  <div class="sync"><span id="sync">Đang kết nối…</span><button type="button" class="lockbtn" id="lockBtn" hidden>Khoá</button></div>
+</header>
+
+<main>
+<section id="tab-book">
+  <div id="firstHint" class="banner" hidden>Mặc định mọi KTV đều làm được mọi dịch vụ. Vào tab <b>KTV &amp; Dịch vụ</b> để bỏ tick những dịch vụ mà từng KTV chưa làm được — app sẽ dựa vào đó để cảnh báo và gợi ý.</div>
+  <div class="daybar">
+    <span class="daytitle" id="daytitle"></span>
+    <span class="daystats" id="daystats"></span>
+  </div>
+  <div class="att" id="att"></div>
+
+  <div class="layout">
+    <form id="form" class="card" autocomplete="off">
+      <h2 id="formTitle">Thêm lịch hẹn</h2>
+      <div class="field"><label for="f-cus"><i class="stp">B1</i>Tên khách <em class="req">*</em></label><input id="f-cus" placeholder="VD: chị Lan"></div>
+      <div class="field"><label for="f-phone"><i class="stp opt">–</i>Số điện thoại <span class="optl">(có thể bỏ qua)</span></label><input id="f-phone" type="tel" placeholder="09xx…"></div>
+      <div class="field"><label for="f-svc"><i class="stp">B2</i>Dịch vụ <em class="req">*</em></label><select id="f-svc"></select></div>
+      <div class="row2">
+        <div class="field"><label for="f-time"><i class="stp">B3</i>Giờ bắt đầu <em class="req">*</em></label><select id="f-time"></select></div>
+        <div class="field"><label>Giờ kết thúc</label><input id="f-end" disabled></div>
+      </div>
+      <div class="field"><label for="f-staff"><i class="stp">B4</i>Kỹ thuật viên</label><select id="f-staff"></select></div>
+      <div id="extraParts"></div>
+      <button type="button" class="btn small addpart" id="addPart">+ Thêm dịch vụ cho khách này</button>
+      <div id="check"></div>
+      <div class="field"><label for="f-note">Ghi chú</label><textarea id="f-note" rows="1"></textarea></div>
+      <div class="actions">
+        <button type="submit" class="btn primary" id="saveBtn">Lưu lịch hẹn</button>
+        <div id="missing" class="missing"></div>
+        <button type="button" class="btn" id="cancelEdit" hidden>Huỷ sửa</button>
+        <button type="button" class="btn danger" id="delBtn" hidden>Xoá lịch</button>
+      </div>
+      <div class="hint">Mẹo: bấm vào chỗ trống trên lịch bên cạnh để chọn nhanh KTV và giờ.</div>
+    </form>
+
+    <div class="card">
+      <div class="tl-legend">
+        <h2 style="margin:0" id="tlTitle">Lịch theo KTV</h2>
+        <span class="mute">Phần gạch chéo = thời gian dọn/chuẩn bị · viền đỏ = trùng lịch hoặc ngoài giờ làm</span>
+      </div>
+      <div class="tl-wrap" id="tlWrap"><div id="timeline"></div></div>
+      <div id="list"></div>
+    </div>
+  </div>
+</section>
+
+<section id="tab-setup" hidden>
+  <div id="defaultBanner" class="banner" hidden>Đang dùng danh sách KTV và kỹ năng có sẵn. Chỉnh rồi bấm <b>Lưu cài đặt</b> để áp dụng.</div>
+  <div class="setup-grid">
+    <div>
+      <div class="card" style="margin-bottom:16px">
+        <h2>Giờ làm việc</h2>
+        <div class="row2">
+          <div class="field"><label for="s-open">Mở cửa</label><input type="time" id="s-open" step="300"></div>
+          <div class="field"><label for="s-last">Nhận khách cuối</label><input type="time" id="s-last" step="300"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label for="s-close">Đóng cửa</label><input type="time" id="s-close" step="300"></div>
+          <div class="field"><label for="s-buf">Dọn / chuẩn bị (phút)</label><input type="number" id="s-buf" min="0" step="5"></div>
+        </div>
+
+        <div class="hint" style="margin-top:0">Giữ chỗ mặc định = thời gian làm + thời gian dọn ở trên (VD: Gội đầu 45p + 10p = 55p). Có thể sửa riêng cột <b>Giữ chỗ</b> của từng dịch vụ trong bảng Dịch vụ.</div>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <h2>Nghỉ sớm</h2>
+        <div class="row2">
+          <div class="field"><label for="s-amt">Nghỉ sớm sáng: vào làm lúc</label><input type="time" id="s-amt" step="300"></div>
+          <div class="field"><label for="s-pmf">Nghỉ sớm chiều: về lúc</label><input type="time" id="s-pmf" step="300"></div>
+        </div>
+        <h2 style="margin-top:6px">Nghỉ nửa buổi</h2>
+        <div class="halfrow"><b>Nửa buổi sáng</b>
+          <div class="field"><label for="s-hamf">Từ</label><input type="time" id="s-hamf" step="300"></div>
+          <div class="field"><label for="s-hamt">Đến</label><input type="time" id="s-hamt" step="300"></div></div>
+        <div class="halfrow"><b>Nửa buổi chiều</b>
+          <div class="field"><label for="s-hpmf">Từ</label><input type="time" id="s-hpmf" step="300"></div>
+          <div class="field"><label for="s-hpmt">Đến</label><input type="time" id="s-hpmt" step="300"></div></div>
+        <div class="hint" style="margin-top:0">KTV sẽ không nhận khách trong giờ nghỉ. Chọn trạng thái bằng cách bấm tên KTV ở trang Lịch hẹn, hoặc ở cột "Lịch nghỉ cố định hằng tuần".</div>
+      </div>
+      <div class="card">
+        <h2>Dịch vụ</h2>
+        <table class="tbl"><thead><tr><th>Tên dịch vụ</th><th style="width:84px">Phút</th><th style="width:84px">Giữ chỗ</th><th style="width:30px"></th></tr></thead><tbody id="svcRows"></tbody></table>
+        <button class="btn small" id="addSvc" style="margin-top:10px">+ Thêm dịch vụ</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>KTV làm được dịch vụ nào?</h2>
+      <div class="hint" style="margin:-6px 0 10px">Tick ô = KTV làm được dịch vụ đó. App chỉ gợi ý KTV có tick.</div>
+      <div class="mx-wrap"><table class="tbl mx" id="mx"></table></div>
+      <button class="btn small" id="addStaff" style="margin-top:10px">+ Thêm KTV</button>
+    </div>
+  </div>
+  <div class="savebar" id="savebar" hidden>
+    <span>Có thay đổi chưa lưu</span>
+    <span style="flex:1"></span>
+    <button class="btn" id="discardCfg">Huỷ thay đổi</button>
+    <button class="btn primary" id="saveCfg" style="background:#fff;color:var(--brand)">Lưu cài đặt</button>
+  </div>
+</section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+/* ---------- chi nhánh (do build.py điền) ---------- */
+const BRANCH={"id": "pdg", "name": "Phan Đình Giót", "storageKey": "yunspa-booking-v1", "staff": [["Nhi", ["goi", "body60", "body90", "cvg", "cvg60", "masschan", "csd"]], ["My", ["goi", "body60", "body90", "cvg", "cvg60", "masschan", "csd"]], ["Thơ", ["goi", "body60", "cvg", "cvg60", "masschan", "csd"]], ["Duyên", ["goi", "body60", "body90", "cvg", "cvg60", "masschan", "csd"]], ["Trang", ["goi", "csd"]], ["Nụ", ["goi", "cvg", "masschan", "csd"]], ["Vi", ["goi", "body60", "body90", "cvg", "cvg60", "masschan"]], ["Khánh", ["goi", "masschan"]]], "pwHash": "4b81fdf5b4824574606e08f881fd8bc2a1c61f20810b359ff89440230cf04c66"};
+/* ---------- đăng nhập bằng mật khẩu (hotline cơ sở) ---------- */
+function sha256(str){ // SHA-256 thuần JS (chạy cả khi mở file trực tiếp)
+  const K=[1116352408,1899447441,3049323471,3921009573,961987163,1508970993,2453635748,2870763221,3624381080,310598401,607225278,1426881987,1925078388,2162078206,2614888103,3248222580,3835390401,4022224774,264347078,604807628,770255983,1249150122,1555081692,1996064986,2554220882,2821834349,2952996808,3210313671,3336571891,3584528711,113926993,338241895,666307205,773529912,1294757372,1396182291,1695183700,1986661051,2177026350,2456956037,2730485921,2820302411,3259730800,3345764771,3516065817,3600352804,4094571909,275423344,430227734,506948616,659060556,883997877,958139571,1322822218,1537002063,1747873779,1955562222,2024104815,2227730452,2361852424,2428436474,2756734187,3204031479,3329325298];
+  const bytes=new TextEncoder().encode(str),l=bytes.length,n=((l+9+63)>>6)<<6,m=new Uint8Array(n);m.set(bytes);m[l]=0x80;
+  const bl=l*8;for(let i=0;i<4;i++)m[n-1-i]=(bl>>>(8*i))&255;
+  let h=[1779033703,3144134277,1013904242,2773480762,1359893119,2600822924,528734635,1541459225];const w=new Array(64);
+  const r=(x,y)=>(x>>>y)|(x<<(32-y));
+  for(let o=0;o<n;o+=64){
+    for(let i=0;i<16;i++)w[i]=(m[o+4*i]<<24)|(m[o+4*i+1]<<16)|(m[o+4*i+2]<<8)|m[o+4*i+3];
+    for(let i=16;i<64;i++){const s0=r(w[i-15],7)^r(w[i-15],18)^(w[i-15]>>>3),s1=r(w[i-2],17)^r(w[i-2],19)^(w[i-2]>>>10);w[i]=(w[i-16]+s0+w[i-7]+s1)|0}
+    let [a,b,c,d,e,f,g,hh]=h;
+    for(let i=0;i<64;i++){const S1=r(e,6)^r(e,11)^r(e,25),ch=(e&f)^(~e&g),t1=(hh+S1+ch+K[i]+w[i])|0,S0=r(a,2)^r(a,13)^r(a,22),mj=(a&b)^(a&c)^(b&c),t2=(S0+mj)|0;hh=g;g=f;f=e;e=(d+t1)|0;d=c;c=b;b=a;a=(t1+t2)|0}
+    h=[h[0]+a|0,h[1]+b|0,h[2]+c|0,h[3]+d|0,h[4]+e|0,h[5]+f|0,h[6]+g|0,h[7]+hh|0];
+  }
+  return h.map(x=>(x>>>0).toString(16).padStart(8,"0")).join("");
+}
+(function gate(){
+  const g=document.getElementById("gate"),H=BRANCH.pwHash,K=BRANCH.storageKey+"-auth";
+  if(!H){g.classList.add("ok");return}
+  let ok=false;try{ok=localStorage.getItem(K)===H}catch(e){}
+  const lock=document.getElementById("lockBtn");lock.hidden=false;
+  lock.addEventListener("click",()=>{try{localStorage.removeItem(K)}catch(e){}document.getElementById("gatePw").value="";g.classList.remove("ok");document.getElementById("gatePw").focus()});
+  if(ok){g.classList.add("ok");return}
+  document.getElementById("gateForm").addEventListener("submit",e=>{
+    e.preventDefault();
+    const v=document.getElementById("gatePw").value.replace(/\D/g,"");
+    if(sha256("yunspa:"+v)===H){try{localStorage.setItem(K,H)}catch(e){}g.classList.add("ok");document.getElementById("gateErr").textContent=""}
+    else{document.getElementById("gateErr").textContent="Sai mật khẩu, thử lại.";document.getElementById("gatePw").select()}
+  });
+})();
+/* ---------- defaults ---------- */
+const SVC0=[["goi","Gội đầu",45],["csd","Chăm sóc da",80],["nangco","Nâng cơ",90],["cvg","cvg 30'",40],["cvg60","cvg 60'",70],["body60","Body (60 phút)",70],["body90","Body (90 phút)",100],["masschan","Massa chân",55],["chagot","Chà gót",40]];
+const STAFF0=BRANCH.staff||[];
+const DEFAULT_CONFIG={
+  openTime:"09:00",lastStart:"19:50",closeTime:"21:30",buffer:10,step:5,amTo:"10:30",pmFrom:"18:30",hamFrom:"09:00",hamTo:"14:00",hpmFrom:"14:00",hpmTo:"21:30",
+  services:SVC0.map(([id,name,dur])=>({id,name,dur})),
+  staff:STAFF0.map(([n,sk],i)=>({id:"k"+(i+1),name:n,skills:sk.slice(),weekly:{}}))
+};
+const PALETTE=["#fbd3e5","#f6dcc8","#dcd6f2","#f3d6de","#d6e6f5","#efe5c2","#d9ecc9","#e8d9cc","#cde9ee","#f0d3c0"];
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const pad=n=>String(n).padStart(2,"0");
+const hm=m=>pad(Math.floor(m/60))+":"+pad(m%60);
+const toMin=s=>{const p=String(s||"0:0").split(":").map(Number);return (p[0]||0)*60+(p[1]||0)};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const clone=o=>JSON.parse(JSON.stringify(o));
+function dateStr(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+const todayStr=()=>dateStr(new Date());
+const nowMin=()=>{const d=new Date();return d.getHours()*60+d.getMinutes()};
+function shiftDay(s,n){const [y,m,d]=s.split("-").map(Number);return dateStr(new Date(y,m-1,d+n))}
+function viDate(s){const [y,m,d]=s.split("-").map(Number);const w=["CN","T2","T3","T4","T5","T6","T7"][new Date(y,m-1,d).getDay()];return w+", "+pad(d)+"/"+pad(m)+"/"+y}
+let toastT;function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("on");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("on"),2600)}
+
+/* ---------- state ---------- */
+let cfg=clone(DEFAULT_CONFIG), cfgIsDefault=true;
+let day=todayStr(), dayBookings=[], dayMeta={override:{}}, editingId=null, editingIds=new Set(), store=null, readOnly=false;
+let showNeed=false;
+let unsubDay=null, unsubMeta=null, draft=null, dirty=false, delArmed=false, forceArmed=false;
+
+/* ---------- stores ---------- */
+function localStore(){
+  const KEY=BRANCH.storageKey;
+  let mem={config:null,bookings:[],days:{}};
+  try{const v=JSON.parse(localStorage.getItem(KEY));if(v&&Array.isArray(v.bookings))mem=v}catch(e){}
+  mem.days=mem.days||{};
+  const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(mem))}catch(e){}};
+  let cfgCb=null,dayCb=null,metaCb=null,cur=null,curMeta=null;
+  const emit=()=>{cfgCb&&cfgCb(mem.config);dayCb&&dayCb(mem.bookings.filter(b=>b.date===cur));metaCb&&metaCb(mem.days[curMeta]||null)};
+  return{mode:"local",
+    async cleanupBefore(d){mem.bookings=mem.bookings.filter(b=>b.date>=d);Object.keys(mem.days).forEach(k=>{if(k<d)delete mem.days[k]});persist()},
+    subscribeDayMeta(d,cb){curMeta=d;metaCb=cb;cb(mem.days[d]||null);return()=>{metaCb=null}},
+    async saveDayMeta(d,m){mem.days[d]=m;persist();emit()},
+    subscribeConfig(cb){cfgCb=cb;cb(mem.config);return()=>{cfgCb=null}},
+    subscribeDay(d,cb){cur=d;dayCb=cb;cb(mem.bookings.filter(b=>b.date===d));return()=>{dayCb=null}},
+    async saveConfig(c){mem.config=c;persist();emit()},
+    async addBooking(b){mem.bookings.push(Object.assign({},b,{id:uid()}));persist();emit()},
+    async updateBooking(id,b){const i=mem.bookings.findIndex(x=>x.id===id);if(i>=0)mem.bookings[i]=Object.assign({},b,{id});persist();emit()},
+    async deleteBooking(id){mem.bookings=mem.bookings.filter(x=>x.id!==id);persist();emit()}
+  };
+}
+function dbStore(db){
+  const strip=b=>{const o=Object.assign({},b);delete o.id;return o};
+  return{mode:"db",
+    async cleanupBefore(d){
+      const old=await db.collection("bookings").where("date","<",d).limit(200).get();
+      for(const x of old.docs)await db.collection("bookings").doc(x.id).delete();
+      const days=await db.collection("days").get();
+      for(const x of days.docs)if(x.id<d)await db.collection("days").doc(x.id).delete();
+    },
+    subscribeDayMeta(d,cb,err){return db.doc("days/"+d).onSnapshot(s=>cb(s.exists?s.data():null,s.metadata),err)},
+    saveDayMeta(d,m){return db.doc("days/"+d).set(clone(m))},
+    subscribeConfig(cb,err){return db.doc("config/main").onSnapshot(s=>cb(s.exists?s.data():null,s.metadata),err)},
+    subscribeDay(d,cb,err){return db.collection("bookings").where("date","==",d).onSnapshot(s=>cb(s.docs.map(x=>Object.assign({},x.data(),{id:x.id})),s.metadata),err)},
+    saveConfig(c){return db.doc("config/main").set(clone(c))},
+    addBooking(b){return db.collection("bookings").doc(uid()).set(strip(b))},
+    updateBooking(id,b){return db.collection("bookings").doc(id).set(strip(b))},
+    deleteBooking(id){return db.collection("bookings").doc(id).delete()}
+  };
+}
+function handleWriteError(e){
+  const code=e&&e.code;
+  if(code==="invalid_argument"||code==="not_granted"){readOnly=true;setSync();toast("Bạn chỉ có quyền xem lịch, không sửa được.");}
+  else if(code==="quota_exceeded"){toast("Bộ nhớ dữ liệu đã đầy — hãy xoá bớt lịch cũ.");}
+  else toast("Chưa lưu được, thử lại sau giây lát.");
+}
+function setSync(text){
+  const el=$("#sync");
+  if(text){el.textContent=text;return}
+  if(!store){el.textContent="Đang kết nối…";return}
+  el.textContent=readOnly?"Chế độ chỉ xem":(store.mode==="db"?"● Đồng bộ cho mọi người":"● Lưu trên máy này");
+}
+
+/* ---------- core logic ---------- */
+const svc=id=>cfg.services.find(s=>s.id===id);
+const stf=id=>cfg.staff.find(s=>s.id===id);
+const span=b=>(b.dur||0)+(b.buf||0);
+const WD=["CN","T2","T3","T4","T5","T6","T7"];
+function weekday(s){const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d).getDay()}
+/* lịch cố định hằng tuần: weekly[thứ] = off | am | pm (không có = đi làm cả ngày) */
+function weeklyState(k,wd){wd=wd==null?weekday(day):wd;const w=(k.weekly||{})[wd];if(SHIFTS.includes(w))return w;return (k.weeklyOff||[]).includes(wd)?"off":"on"}
+function weeklyOff(k){return weeklyState(k)!=="on"}
+/* các trạng thái trong ngày:
+   on  đi làm cả ngày        off nghỉ cả ngày
+   am  nghỉ sớm sáng  (vào làm lúc amTo)       pm  nghỉ sớm chiều (về lúc pmFrom)
+   ham nghỉ nửa buổi sáng  (hamFrom–hamTo)     hpm nghỉ nửa buổi chiều (hpmFrom–hpmTo) */
+const SHIFTS=["on","am","pm","ham","hpm","off"];
+const ST_TXT={on:"Đi làm cả ngày",am:"Nghỉ sớm sáng",pm:"Nghỉ sớm chiều",ham:"Nghỉ nửa buổi sáng",hpm:"Nghỉ nửa buổi chiều",off:"Nghỉ cả ngày"};
+const ST_SHORT={am:"SS",pm:"SC",ham:"NS",hpm:"NC"};
+function offWindow(st){
+  if(st==="am")return [toMin(cfg.openTime),toMin(cfg.amTo)];
+  if(st==="pm")return [toMin(cfg.pmFrom),24*60];
+  if(st==="ham")return [toMin(cfg.hamFrom),toMin(cfg.hamTo)];
+  if(st==="hpm")return [toMin(cfg.hpmFrom),toMin(cfg.hpmTo)];
+  return null;
+}
+function rangeTxt(st){return st==="am"?"vào "+cfg.amTo:st==="pm"?"về "+cfg.pmFrom:st==="ham"?cfg.hamFrom+"–"+cfg.hamTo:st==="hpm"?cfg.hpmFrom+"–"+cfg.hpmTo:""}
+function shiftOf(staffId){
+  const ov=(dayMeta.override||{})[staffId];
+  if(SHIFTS.includes(ov))return ov;
+  const k=stf(staffId);return k?weeklyState(k):"on";
+}
+function isOff(staffId){return shiftOf(staffId)==="off"}
+function inShift(staffId,t,dur){
+  const st=shiftOf(staffId);
+  if(st==="off")return false;
+  const w=offWindow(st);
+  if(w&&t<w[1]&&t+dur>w[0])return false;   // thời gian làm trùng khoảng nghỉ
+  return true;
+}
+function halfTxt(st){
+  if(st==="ham"||st==="hpm")return "nghỉ "+rangeTxt(st);
+  return st==="off"?"nghỉ":rangeTxt(st);
+}
+function shiftLabel(staffId){return halfTxt(shiftOf(staffId))}
+const working=()=>cfg.staff.filter(k=>!isOff(k.id));
+const isEx=(e,id)=>e instanceof Set?e.has(id):e===id;
+const editExcl=()=>editingIds.size?editingIds:editingId;
+function overlaps(staffId,start,end,excl){return dayBookings.filter(b=>b.staffId===staffId&&!isEx(excl,b.id)&&b.start<end&&start<b.start+span(b))}
+function slotTimes(){const a=[];const o=toMin(cfg.openTime),l=toMin(cfg.lastStart),st=cfg.step||5;for(let t=o;t<=l;t+=st)a.push(t);return a}
+function isPast(t){return day===todayStr()&&t<nowMin()}
+function isPastDay(){return day<todayStr()}
+let skipPast=false; // chỉ bỏ giờ đã qua khi giờ khách muốn còn ở tương lai
+/* giữ chỗ riêng từng dịch vụ (hold); để trống = thời gian làm + thời gian dọn chung */
+function svcBuf(sv,c){c=c||cfg;return (sv.hold!=null&&sv.hold!=="")?Math.max(0,(parseInt(sv.hold,10)||0)-(parseInt(sv.dur,10)||0)):(+c.buffer||0)}
+function holdOf(sv,c){return (parseInt(sv.dur,10)||0)+svcBuf(sv,c)}
+let evDur=0; // thời gian làm của dịch vụ đang xét (đặt trong evaluate)
+function freeSlots(staffId,L,excl){const d=evDur;return slotTimes().filter(t=>!(skipPast&&isPast(t))&&inShift(staffId,t,d)&&overlaps(staffId,t,t+L,excl).length===0)}
+/* KTV càng ít kỹ năng hiếm càng được ưu tiên xếp trước, để giữ người đa năng cho dịch vụ khó */
+function versatility(k){
+  const ws=working();
+  return (k.skills||[]).reduce((a,id)=>a+1/Math.max(1,ws.filter(o=>(o.skills||[]).includes(id)).length),0);
+}
+const byPriority=(a,b)=>versatility(a)-versatility(b)||load(a.id)-load(b.id);
+function load(staffId){return dayBookings.filter(b=>b.staffId===staffId).reduce((a,b)=>a+(b.dur||0),0)}
+/* chọn các mốc gần giờ yêu cầu nhất, cách nhau >= 30p cho cùng 1 KTV */
+function pickSpaced(items,req,n){
+  items.sort((a,b)=>a.d-b.d||b.t-a.t);
+  const out=[];
+  for(const it of items){
+    if(out.some(o=>o.staffId===it.staffId&&o.t===it.t))continue;
+    out.push(it);if(out.length>=n)break;
+  }
+  return out;
+}
+function nearestFor(staffId,req,L,excl,n){
+  return pickSpaced(freeSlots(staffId,L,excl).map(t=>({staffId,t,d:Math.abs(t-req)})),req,n);
+}
+/* mỗi KTV một giờ trống gần giờ khách nhất */
+function nearestPerStaff(list,req,L,excl,n){
+  const out=[];
+  list.forEach(q=>{const fs=freeSlots(q.id,L,excl);if(!fs.length)return;
+    const best=fs.reduce((a,x)=>{const d=Math.abs(x-req),da=Math.abs(a-req);return d<da||(d===da&&x>a)?x:a});
+    out.push({staffId:q.id,t:best,d:Math.abs(best-req)})});
+  return out.sort((a,b)=>a.d-b.d||b.t-a.t).slice(0,n);
+}
+function nearestAny(list,req,L,excl,n){
+  const all=[];list.forEach(q=>freeSlots(q.id,L,excl).forEach(t=>all.push({staffId:q.id,t,d:Math.abs(t-req)})));
+  return pickSpaced(all,req,n);
+}
+/* Gợi ý chuyển 1 lịch đã có sang KTV khác đang rảnh, để KTV kia nhận khách mới đúng giờ */
+function swapOptions(targets,t,L,excl){
+  const out=[];
+  const dur=evDur;
+  for(const k of targets){
+    if(!inShift(k.id,t,dur))continue; // KTV phải có mặt đủ thời gian làm khách mới
+    const clash=overlaps(k.id,t,t+L,excl);
+    if(clash.length!==1)continue;
+    const c=clash[0];
+    if(!c.auto)continue;                                   // khách đã chọn đích danh KTV → không chuyển
+    if(day===todayStr()&&c.start<=nowMin())continue;       // lịch đã bắt đầu → không chuyển
+    const alt=working().filter(o=>o.id!==k.id&&(o.skills||[]).includes(c.serviceId)&&inShift(o.id,c.start,c.dur)&&overlaps(o.id,c.start,c.start+span(c),c.id).length===0).sort(byPriority);
+    if(alt.length)out.push({k,c,to:alt[0]});
+  }
+  return out.slice(0,3);
+}
+let lastSwaps=[];
+function evaluate(){
+  const sid=$("#f-svc").value, kid=$("#f-staff").value, t=parseInt($("#f-time").value,10);
+  const s=svc(sid);
+  if(!s||isNaN(t))return{status:"incomplete"};
+  const L=holdOf(s), excl=editExcl(); evDur=s.dur;
+  skipPast=day===todayStr()&&t>=nowMin();
+  const qualified=cfg.staff.filter(x=>(x.skills||[]).includes(sid)&&!isOff(x.id));
+  const r={L,t,sid,s,qualified,notes:[]};
+  if(t+L>toMin(cfg.closeTime))r.notes.push("Kết thúc lúc "+hm(t+L)+", sau giờ đóng cửa "+cfg.closeTime+".");
+  if(isPast(t)||isPastDay())r.notes.push("Thời điểm này đã qua.");
+  if(!qualified.length)return Object.assign(r,{status:"noqual"});
+  const freeNow=qualified.filter(x=>inShift(x.id,t,s.dur)&&overlaps(x.id,t,t+L,excl).length===0).sort(byPriority);
+  if(!kid){
+    if(freeNow.length)return Object.assign(r,{status:"ok",assign:freeNow[0].id,auto:true,freeNow});
+    return Object.assign(r,{status:"conflict",auto:true,sugg:nearestAny(qualified,t,L,excl,6),swaps:swapOptions(qualified,t,L,excl)});
+  }
+  const k=stf(kid);
+  if(!k)return{status:"incomplete"};
+  if(isOff(kid))return Object.assign(r,{status:"off",k,freeNow,sugg:freeNow.length?null:nearestAny(qualified,t,L,excl,5)});
+  if(!inShift(kid,t,s.dur))return Object.assign(r,{status:"shift",k,freeNow,same:(k.skills||[]).includes(sid)?nearestFor(kid,t,L,excl,4):[],sugg:freeNow.length?null:nearestAny(qualified,t,L,excl,5)});
+  if(!(k.skills||[]).includes(sid))return Object.assign(r,{status:"skill",k,freeNow,sugg:freeNow.length?null:nearestAny(qualified,t,L,excl,5)});
+  const clash=overlaps(kid,t,t+L,excl);
+  if(!clash.length)return Object.assign(r,{status:"ok",assign:kid});
+  const fs=freeSlots(kid,L,excl);
+  r.after=fs.find(x=>x>t);r.before=fs.filter(x=>x<t).pop();r.freeList=fs;r.otherNear=nearestPerStaff(qualified.filter(x=>x.id!==kid),t,L,excl,6);
+  return Object.assign(r,{status:"conflict",k,clash,swaps:swapOptions([k],t,L,excl),same:nearestFor(kid,t,L,excl,4),freeNow:freeNow.filter(x=>x.id!==kid)});
+}
+
+/* ---------- một khách nhiều dịch vụ (combo) ----------
+   DV1 = các ô B2/B3/B4. DV2.. = các dòng trong #extraParts.
+   Các dịch vụ luôn làm nối tiếp: DV sau bắt đầu khi DV trước xong (không có 2 DV cùng lúc).
+   KTV "same" = cùng KTV với DV trước (không tính thời gian dọn giữa 2 DV của cùng 1 khách). */
+function getParts(){
+  const parts=[{sid:$("#f-svc").value,kid:$("#f-staff").value,mode:"seq"}];
+  document.querySelectorAll("#extraParts .xp").forEach(r=>parts.push({sid:r.querySelector(".xp-svc").value,kid:r.querySelector(".xp-staff").value,mode:"seq"}));
+  return parts;
+}
+const isCombo=()=>document.querySelectorAll("#extraParts .xp").length>0;
+function planCombo(parts,T,excl){
+  const n=parts.length;let deepest=null;
+  const virt=[];
+  const vbusy=(id,a,z)=>virt.filter(v=>v.staffId===id&&v.start<z&&a<v.start+v.dur+v.buf);
+  function go(i,items){
+    if(i===n)return items.slice();
+    const p=parts[i],s=svc(p.sid);
+    const prev=items[i-1];
+    const start=i===0?T:(p.mode==="par"?prev.start:prev.start+prev.dur);
+    let cands,auto=false;
+    if(p.kid==="same"){
+      if(p.mode==="par"){fail(i,{type:"samepar"},items,start);return null}
+      cands=[prev.staffId];
+    }else if(p.kid)cands=[p.kid];
+    else{auto=true;cands=working().filter(k=>(k.skills||[]).includes(s.id)).sort(byPriority).map(k=>k.id);
+      if(!cands.length){fail(i,{type:"noqual"},items,start);return null}}
+    let anyFree=false;
+    for(const id of cands){
+      const k=stf(id);if(!k)continue;
+      if(isOff(id)){fail(i,{type:"off",id},items,start);continue}
+      if(!(k.skills||[]).includes(s.id)){fail(i,{type:"skill",id},items,start);continue}
+      if(!inShift(id,start,s.dur)){fail(i,{type:"shift",id},items,start);continue}
+      // cùng KTV làm tiếp DV trước của chính khách này → bỏ thời gian dọn của DV trước
+      const cont=prev&&p.mode!=="par"&&prev.staffId===id;
+      const pv=cont?virt[i-1]:null,oldBuf=pv?pv.buf:0;if(pv)pv.buf=0;
+      const buf=svcBuf(s);
+      const clash=overlaps(id,start,start+s.dur+buf,excl), vc=vbusy(id,start,start+s.dur+buf);
+      if(clash.length||vc.length){if(pv)pv.buf=oldBuf;fail(i,{type:vc.length?"selfclash":"busy",id,clash},items,start);continue}
+      anyFree=true;
+      const it={sid:s.id,s,staffId:id,start,dur:s.dur,buf,auto};
+      virt.push(it);items.push(it);
+      const r=go(i+1,items);
+      if(r)return r;
+      items.pop();virt.pop();if(pv)pv.buf=oldBuf;
+    }
+    if(auto&&!anyFree)fail(i,{type:"nofree"},items,start);
+    return null;
+  }
+  function fail(i,reason,items,start){if(!deepest||i>=deepest.i)deepest={i,reason,items:items.slice(),start}}
+  const res=go(0,[]);
+  return res?{ok:true,items:res}:{ok:false,fail:deepest};
+}
+function evaluateCombo(){
+  const parts=getParts();
+  const t=parseInt($("#f-time").value,10);
+  if(parts.some(p=>!svc(p.sid))||isNaN(t))return{status:"incomplete",combo:true};
+  skipPast=day===todayStr()&&t>=nowMin();
+  const excl=editExcl();
+  const notes=[];if(isPast(t)||isPastDay())notes.push("Thời điểm này đã qua.");
+  const r=planCombo(parts,t,excl);
+  if(r.ok){const end=Math.max(...r.items.map(x=>x.start+x.dur));if(end>toMin(cfg.closeTime))notes.push("Kết thúc lúc "+hm(end)+", sau giờ đóng cửa "+cfg.closeTime+".");
+    return{status:"ok",combo:true,t,items:r.items,notes,ghosts:r.items.map(x=>({staffId:x.staffId,start:x.start,len:x.dur+x.buf,ok:true}))}}
+  // gợi ý: giờ gần nhất làm được cả combo với lựa chọn KTV như hiện tại
+  const times=slotTimes().filter(x=>!(skipPast&&isPast(x))).sort((a,b)=>Math.abs(a-t)-Math.abs(b-t)||b-a);
+  const alt=[];for(const T of times){if(T===t)continue;const q=planCombo(parts,T,excl);if(q.ok){alt.push({T,items:q.items});if(alt.length>=7)break}}
+  // gợi ý: giữ giờ, để Tự động chọn KTV cho dịch vụ đang vướng
+  let fix=null;const fi=r.fail?r.fail.i:-1;
+  if(fi>=0&&parts[fi].kid&&parts[fi].kid!=="same"||fi>=0&&parts[fi].kid==="same"){
+    const p2=parts.map((p,i)=>i===fi?Object.assign({},p,{kid:""}):p);const q=planCombo(p2,t,excl);
+    if(q.ok)fix={i:fi,staffId:q.items[fi].staffId,items:q.items};
+  }
+  const f=r.fail||{items:[],i:0};
+  const ghosts=f.items.map(x=>({staffId:x.staffId,start:x.start,len:x.dur+x.buf,ok:true}));
+  if(f.reason&&f.reason.id){const s=svc(parts[f.i].sid);ghosts.push({staffId:f.reason.id,start:f.start,len:s.dur+svcBuf(s),ok:false})}
+  return{status:"conflict",combo:true,t,parts,fail:f,alt,fix,notes,ghosts};
+}
+function comboReason(f,parts){
+  const s=svc(parts[f.i].sid),k=f.reason.id?stf(f.reason.id):null,kn=k?esc(k.name):"";
+  const r=f.reason;
+  if(r.type==="busy")return `${kn} đang bận lúc ${hm(f.start)}`+(r.clash&&r.clash[0]?` (${esc(r.clash[0].customer)} ${hm(r.clash[0].start)}–${hm(r.clash[0].start+r.clash[0].dur)})`:"");
+  if(r.type==="selfclash")return `${kn} không thể làm 2 dịch vụ cùng lúc`;
+  if(r.type==="samepar")return "“Cùng KTV” không chọn được với “Làm cùng lúc”";
+  if(r.type==="skill")return `${kn} không làm ${esc(s.name)}`;
+  if(r.type==="off")return `${kn} nghỉ hôm nay`;
+  if(r.type==="shift"){const st=shiftOf(k.id);return `${kn} ${esc(ST_TXT[st].toLowerCase())} (${esc(rangeTxt(st))})`}
+  if(r.type==="noqual")return `Không KTV đi làm nào làm được ${esc(s.name)}`;
+  return `Không KTV nào làm được ${esc(s.name)} rảnh lúc ${hm(f.start)}`;
+}
+function comboLine(x,i){const k=stf(x.staffId);return `<li>${i+1}. ${esc(x.s.name)} · ${hm(x.start)}–${hm(x.start+x.dur)} · <b>${esc(k?k.name:"")}</b>${x.auto?" (tự động)":""}</li>`}
+function renderCheckCombo(ev){
+  const box=$("#check");lastSwaps=[];
+  const notes=(ev.notes||[]).length?`<ul>${ev.notes.map(n=>`<li>${esc(n)}</li>`).join("")}</ul>`:"";
+  if(ev.status==="incomplete"){box.innerHTML=`<div class="check amber">Chọn dịch vụ cho tất cả các dòng và giờ bắt đầu.</div>`;$("#f-end").value="";return}
+  if(ev.status==="ok"){
+    const end=Math.max(...ev.items.map(x=>x.start+x.dur));
+    $("#f-end").value=hm(end)+" (cả "+ev.items.length+" DV)";
+    box.innerHTML=`<div class="check ${notes?"amber":"ok"}"><div class="ttl">✓ Khách làm ${ev.items.length} dịch vụ · ${hm(ev.t)}–${hm(end)}</div><ul class="combo-list">${ev.items.map(comboLine).join("")}</ul>${notes}</div>`;
+    return;
+  }
+  $("#f-end").value="";
+  const f=ev.fail;let h=`<div class="check bad"><div class="ttl">⚠ Chưa xếp được dịch vụ ${f.i+1} (${esc(svc(ev.parts[f.i].sid).name)})</div><ul class="combo-list">`+
+    f.items.map((x,i)=>comboLine(x,i)).join("")+`<li class="badp">${f.i+1}. ${comboReason(f,ev.parts)}</li></ul>${notes}`;
+  if(ev.alt.length){const a=ev.alt[0],late=a.T>ev.t;
+    h+=`<div class="reco">👉 Giữ đúng KTV đã chọn: xin khách ${late?"lùi":"đến sớm"} sang <b>${hm(a.T)}</b> (${late?"muộn":"sớm"} ${Math.abs(a.T-ev.t)} phút)<ul class="combo-list">${a.items.map(comboLine).join("")}</ul><button type="button" class="recobtn" data-ct="${a.T}">Đổi giờ khách sang ${hm(a.T)}</button></div>`;
+    if(ev.alt.length>1)h+=`<div class="sg-h">Giờ khác làm được cả ${ev.parts.length} dịch vụ</div><div class="sg">${ev.alt.slice(1).map(x=>`<button type="button" data-ct="${x.T}">${hm(x.T)}<small>${x.T>ev.t?"+":""}${x.T-ev.t}p</small></button>`).join("")}</div>`;
+  }else h+=`<div class="sg-h">Không còn giờ nào trong ngày làm được cả combo với KTV đã chọn</div>`;
+  if(ev.fix){const k=stf(ev.fix.staffId);h+=`<div class="sg-h">Hoặc giữ giờ ${hm(ev.t)}, đổi KTV cho dịch vụ ${ev.fix.i+1}</div><div class="sg"><button type="button" data-cfix="${ev.fix.i}" data-cst="${esc(ev.fix.staffId)}">DV${ev.fix.i+1} → ${esc(k.name)}<small>đúng giờ</small></button></div>`;}
+  box.innerHTML=h+"</div>";
+}
+function staffOptionsHtml(sel,withSame){
+  let h=(withSame?'<option value="same">↩ Cùng KTV với dịch vụ trước</option>':"")+'<option value="">⚡ Tự động — KTV phù hợp đang rảnh</option>';
+  h+=working().map(k=>`<option value="${esc(k.id)}">${esc(k.name)}</option>`).join("");
+  return h;
+}
+function addPartRow(p){
+  const n=document.querySelectorAll("#extraParts .xp").length+2;
+  if(n>4){toast("Tối đa 4 dịch vụ cho một khách.");return}
+  const d=document.createElement("div");d.className="xp";
+  d.innerHTML=`<div class="xp-h"><span><i class="stp">DV${n}</i>Dịch vụ tiếp theo</span><button type="button" class="x xp-del" title="Bỏ dịch vụ này">✕</button></div>
+    <select class="xp-svc"><option value="">— Chọn dịch vụ —</option>${cfg.services.map(s=>`<option value="${esc(s.id)}">${esc(s.name)} · ${s.dur}p</option>`).join("")}</select>
+    <select class="xp-staff">${staffOptionsHtml("",true)}</select>
+    <div class="xp-note">Bắt đầu ngay khi dịch vụ trước xong.</div>`;
+  $("#extraParts").appendChild(d);
+  if(p){d.querySelector(".xp-svc").value=p.sid||"";
+    const st=d.querySelector(".xp-staff");if(p.kid&&![...st.options].some(o=>o.value===p.kid)){const k=stf(p.kid);st.insertAdjacentHTML("beforeend",`<option value="${esc(p.kid)}">${esc(k?k.name:p.kid)}</option>`)}st.value=p.kid==null?"same":p.kid;}
+  renumberParts();
+}
+function renumberParts(){document.querySelectorAll("#extraParts .xp").forEach((r,i)=>{r.querySelector(".stp").textContent="DV"+(i+2)});$("#addPart").textContent=isCombo()?"+ Thêm dịch vụ nữa":"+ Thêm dịch vụ cho khách này"}
+async function saveCombo(cus){
+  const ev=evaluateCombo();
+  if(ev.status!=="ok"){toast("Chỉ lưu được khi tất cả dịch vụ đều xếp được KTV.");return}
+  const gid=editingIds.size?([...editingIds].map(id=>dayBookings.find(b=>b.id===id)).find(b=>b&&b.groupId)||{}).groupId||uid():uid();
+  const n=ev.items.length, old=[...editingIds];
+  const base={date:day,customer:cus,phone:$("#f-phone").value.trim(),note:$("#f-note").value.trim(),updatedAt:Date.now()};
+  const btn=$("#saveBtn");btn.disabled=true;
+  try{
+    for(let i=0;i<n;i++){const x=ev.items[i],k=stf(x.staffId);
+      const b=Object.assign({},base,{start:x.start,dur:x.dur,buf:x.buf,serviceId:x.s.id,serviceName:x.s.name,staffId:x.staffId,staffName:k.name,auto:!!x.auto,groupId:n>1?gid:null,part:i+1,parts:n});
+      if(old[i])await store.updateBooking(old[i],b);else await store.addBooking(b);}
+    for(let i=n;i<old.length;i++)await store.deleteBooking(old[i]);
+    toast(`Đã lưu: ${cus} · ${n} dịch vụ · ${hm(ev.items[0].start)}–${hm(Math.max(...ev.items.map(x=>x.start+x.dur)))}`);
+    resetForm();
+  }catch(e){handleWriteError(e);btn.disabled=false}
+}
+
+/* ---------- form ---------- */
+function fillServiceSelect(){
+  const sel=$("#f-svc"),v=sel.value;
+  sel.innerHTML='<option value="">— Chọn dịch vụ —</option>'+cfg.services.map(s=>`<option value="${esc(s.id)}">${esc(s.name)} · ${s.dur}p</option>`).join("");
+  if(cfg.services.some(s=>s.id===v))sel.value=v;
+}
+function fillTimeSelect(){
+  const sel=$("#f-time"),v=sel.value;
+  const times=slotTimes();
+  sel.innerHTML='<option value="">— Chọn giờ —</option>'+times.map(t=>`<option value="${t}">${hm(t)}</option>`).join("");
+  if(v!==""&&times.includes(+v))sel.value=v;
+  else if(v!==""&&!isNaN(+v)){ // giữ giờ lẻ của lịch cũ
+    sel.insertAdjacentHTML("beforeend",`<option value="${+v}">${hm(+v)}</option>`);sel.value=v;
+  }
+}
+function fillStaffSelect(){
+  const sel=$("#f-staff"),v=sel.value,sid=$("#f-svc").value,t=parseInt($("#f-time").value,10);
+  const s=svc(sid);const L=s?holdOf(s):0;
+  const status=k=>{
+    const sl=shiftLabel(k.id);
+    if(!s||isNaN(t))return sl?" · "+sl:"";
+    if(!inShift(k.id,t,s.dur)){const st=shiftOf(k.id);return" · "+ST_TXT[st].toLowerCase()+" ("+rangeTxt(st)+")"}
+    const c=overlaps(k.id,t,t+L,editExcl());
+    if(!c.length)return" · rảnh";
+    const end=Math.max(...c.map(b=>b.start+span(b)));
+    return" · bận đến "+hm(end);
+  };
+  const on=working(), off=cfg.staff.filter(k=>isOff(k.id));
+  const isFree=k=>!s||isNaN(t)||(inShift(k.id,t,s.dur)&&overlaps(k.id,t,t+L,editExcl()).length===0);
+  const can=on.filter(k=>!s||(k.skills||[]).includes(sid)).sort((a,b)=>isFree(b)-isFree(a));
+  const cannot=s?on.filter(k=>!(k.skills||[]).includes(sid)):[];
+  let h='<option value="">⚡ Tự động — KTV phù hợp đang rảnh</option>';
+  h+=`<optgroup label="${s?"Đi làm · làm được "+esc(s.name):"KTV đi làm hôm nay"}">`+can.map(k=>`<option value="${esc(k.id)}">${esc(k.name)}${status(k)}</option>`).join("")+"</optgroup>";
+  if(cannot.length)h+=`<optgroup label="Đi làm · chưa làm được dịch vụ này">`+cannot.map(k=>`<option value="${esc(k.id)}">${esc(k.name)} (không làm DV này)</option>`).join("")+"</optgroup>";
+
+  sel.innerHTML=h;
+  if(cfg.staff.some(k=>k.id===v))sel.value=v;
+}
+function sugBtn(it,best){
+  const k=stf(it.staffId);const diff=it.t-((parseInt($("#f-time").value,10))||0);
+  const rel=diff===0?"đúng giờ":(diff>0?"+"+diff+"p":diff+"p");
+  return `<button type="button" class="${best?"best":""}" data-st="${esc(it.staffId)}" data-t="${it.t}">${hm(it.t)} · ${esc(k?k.name:"?")}<small>${rel}</small></button>`;
+}
+function swapHtml(ev){
+  lastSwaps=ev.swaps||[];
+  if(!lastSwaps.length)return"";
+  return `<div class="sg-h">Hoặc đổi KTV cho lịch đã có — nhận khách đúng ${hm(ev.t)}</div><div class="sg" style="flex-direction:column;align-items:flex-start">`+
+    lastSwaps.map((o,i)=>`<button type="button" data-swap="${i}">Chuyển ${esc(o.c.customer)} (khách không chọn KTV) (${esc(o.c.serviceName)} ${hm(o.c.start)}) từ ${esc(o.k.name)} → ${esc(o.to.name)}, xếp khách này cho ${esc(o.k.name)}</button>`).join("")+"</div>";
+}
+function renderCheck(ev){
+  const box=$("#check");
+  if(ev.L!=null)$("#f-end").value=hm(ev.t+ev.s.dur)+(ev.L>ev.s.dur?" (+"+(ev.L-ev.s.dur)+"p dọn)":"");else $("#f-end").value="";
+  const notes=(ev.notes||[]).length?`<ul>${ev.notes.map(n=>`<li>${esc(n)}</li>`).join("")}</ul>`:"";
+  forceArmed=false;lastSwaps=[];
+  if(ev.status==="incomplete"){box.innerHTML="";return}
+  if(ev.status==="noqual"){box.innerHTML=`<div class="check bad"><div class="ttl">Không có KTV đi làm nào làm được “${esc(ev.s.name)}”</div>Kiểm tra danh sách KTV đi làm ngày này, hoặc tick kỹ năng ở tab KTV &amp; Dịch vụ.</div>`;return}
+  if(ev.status==="shift"){
+    const st=shiftOf(ev.k.id);
+    let h=`<div class="check bad"><div class="ttl">⚠ ${esc(ev.k.name)} ${esc(ST_TXT[st].toLowerCase())} (${esc(rangeTxt(st))})</div>`+
+      `<div>Lịch này ${hm(ev.t)}–${hm(ev.t+ev.s.dur)} trùng vào giờ nghỉ của ${esc(ev.k.name)}.</div>${notes}`;
+    if(ev.same&&ev.same.length)h+=`<div class="sg-h">Giữ ${esc(ev.k.name)} — giờ gần nhất trong ca</div><div class="sg">${ev.same.map((x,i)=>sugBtn(x,i===0)).join("")}</div>`;
+    if(ev.freeNow.length)h+=`<div class="sg-h">Giữ giờ ${hm(ev.t)} — đổi KTV</div><div class="sg">${ev.freeNow.slice(0,6).map(x=>sugBtn({staffId:x.id,t:ev.t})).join("")}</div>`;
+    else if(ev.sugg&&ev.sugg.length)h+=`<div class="sg-h">Giờ trống gần nhất</div><div class="sg">${ev.sugg.map(x=>sugBtn(x)).join("")}</div>`;
+    box.innerHTML=h+"</div>";return;
+  }
+  if(ev.status==="off"){
+    let h=`<div class="check bad"><div class="ttl">⚠ ${esc(ev.k.name)} nghỉ ngày ${esc(viDate(day))}</div>${notes}`;
+    if(ev.freeNow.length)h+=`<div class="sg-h">KTV đi làm, làm được và rảnh lúc ${hm(ev.t)}</div><div class="sg">${ev.freeNow.slice(0,6).map((x,i)=>sugBtn({staffId:x.id,t:ev.t},i===0)).join("")}</div>`;
+    else if(ev.sugg&&ev.sugg.length)h+=`<div class="sg-h">Không ai rảnh lúc ${hm(ev.t)} — giờ gần nhất</div><div class="sg">${ev.sugg.map((x,i)=>sugBtn(x,i===0)).join("")}</div>`;
+    else h+=`<div style="margin-top:6px">Không còn KTV đi làm nào phù hợp trong ngày.</div>`;
+    h+=`<div style="margin-top:6px;font-size:12.5px">Nếu ${esc(ev.k.name)} đi làm bù, bấm tên ở thanh <b>KTV đi làm</b> phía trên để bật lại.</div></div>`;
+    box.innerHTML=h;return;
+  }
+  if(ev.status==="ok"){
+    const k=stf(ev.assign);
+    let alt="";
+    if(ev.auto&&ev.freeNow.length>1)alt=`<div class="sg-h">KTV khác cũng rảnh</div><div class="sg">${ev.freeNow.slice(1,7).map(x=>sugBtn({staffId:x.id,t:ev.t})).join("")}</div>`;
+    box.innerHTML=`<div class="check ${notes?"amber":"ok"}"><div class="ttl">✓ ${ev.auto?"Sẽ xếp cho <b>"+esc(k.name)+"</b>":"<b>"+esc(k.name)+"</b> rảnh"} · ${hm(ev.t)}–${hm(ev.t+ev.s.dur)}</div>${notes}${alt}</div>`;
+    return;
+  }
+  if(ev.status==="skill"){
+    let h=`<div class="check bad"><div class="ttl">⚠ ${esc(ev.k.name)} không làm dịch vụ “${esc(ev.s.name)}”</div>${notes}`;
+    if(ev.freeNow.length)h+=`<div class="sg-h">KTV làm được và rảnh lúc ${hm(ev.t)}</div><div class="sg">${ev.freeNow.slice(0,6).map((x,i)=>sugBtn({staffId:x.id,t:ev.t},i===0)).join("")}</div>`;
+    else if(ev.sugg&&ev.sugg.length)h+=`<div class="sg-h">Không ai rảnh lúc ${hm(ev.t)} — giờ gần nhất</div><div class="sg">${ev.sugg.map((x,i)=>sugBtn(x,i===0)).join("")}</div>`;
+    else h+=`<div style="margin-top:6px">Hôm nay không còn KTV phù hợp nào trống.</div>`;
+    h+=`</div>`;
+    box.innerHTML=h;return;
+  }
+  // conflict
+  let h=`<div class="check bad">`;
+  if(ev.auto){
+    h+=`<div class="ttl">⚠ Mọi KTV làm được “${esc(ev.s.name)}” đều bận lúc ${hm(ev.t)}</div>${notes}`;
+    if(ev.sugg.length){const g=ev.sugg[0],gk=stf(g.staffId);h+=`<div class="reco">👉 Giờ gần nhất: xin khách ${g.t>ev.t?"lùi":"đến sớm"} sang <b>${hm(g.t)}</b> (${g.t>ev.t?"muộn":"sớm"} ${Math.abs(g.t-ev.t)} phút) với ${esc(gk?gk.name:"")}<button type="button" class="recobtn" data-st="${esc(g.staffId)}" data-t="${g.t}">Đổi giờ khách sang ${hm(g.t)} · ${esc(gk?gk.name:"")}</button></div>`;}
+    h+=swapHtml(ev);
+    h+=ev.sugg.length?`<div class="sg-h">Giờ trống khác</div><div class="sg">${ev.sugg.slice(1).map(x=>sugBtn(x)).join("")}</div>`:`<div style="margin-top:6px">Ngày này đã kín lịch cho dịch vụ này.</div>`;
+    h+="</div>";box.innerHTML=h;return;
+  }
+  const kn=esc(ev.k.name);
+  h+=`<div class="ttl">⚠ ${kn} đang bận lúc ${hm(ev.t)}</div>`+ev.clash.map(b=>`<div>${kn} đang làm <b>${esc(b.customer)}</b> (${esc(b.serviceName)}) ${hm(b.start)}–${hm(b.start+b.dur)}${b.buf?", dọn xong "+hm(b.start+span(b)):""}.</div>`).join("")+notes;
+  if(ev.after!=null||ev.before!=null){
+    const main=ev.after!=null?ev.after:ev.before, late=main>ev.t;
+    h+=`<div class="reco">👉 Nếu khách vẫn muốn <b>${kn}</b> làm: xin khách ${late?"lùi":"đến sớm"} sang <b>${hm(main)}</b> (${late?"muộn":"sớm"} ${Math.abs(main-ev.t)} phút)`+
+      `<button type="button" class="recobtn" data-st="${esc(ev.k.id)}" data-t="${main}">Đổi giờ khách sang ${hm(main)} · ${kn}</button>`+
+      (late&&ev.before!=null?`<div class="reco2">Hoặc nếu khách đến sớm được: <button type="button" class="linkbtn" data-st="${esc(ev.k.id)}" data-t="${ev.before}">${hm(ev.before)} (sớm ${ev.t-ev.before} phút)</button></div>`:"")+`</div>`;
+    const others=(late?ev.freeList.filter(x=>x>main).slice(0,6):ev.freeList.filter(x=>x<main).slice(-6).reverse()).map(t=>({staffId:ev.k.id,t}));
+    if(others.length)h+=`<div class="sg-h">Giờ trống khác của ${kn}</div><div class="sg">${others.map(x=>sugBtn(x)).join("")}</div>`;
+  } else h+=`<div class="sg-h">${kn} đã kín lịch hôm nay</div>`;
+  if(ev.freeNow.length)h+=`<div class="sg-h">Hoặc giữ giờ ${hm(ev.t)}, đổi KTV khác</div><div class="sg">${ev.freeNow.slice(0,6).map(x=>sugBtn({staffId:x.id,t:ev.t})).join("")}</div>`;
+  else if(ev.otherNear&&ev.otherNear.length)h+=`<div class="sg-h">Hoặc đổi KTV khác — không ai rảnh đúng ${hm(ev.t)}, giờ gần nhất của từng người</div><div class="sg">${ev.otherNear.map(x=>sugBtn(x)).join("")}</div>`;
+  else h+=`<div class="sg-h">Không có KTV khác làm được dịch vụ này còn trống</div>`;
+  h+=swapHtml(ev);
+  h+=`</div>`;
+  box.innerHTML=h;
+}
+function refreshForm(){
+  fillStaffSelect();
+  const ev=isCombo()?evaluateCombo():evaluate();
+  if(ev.combo)renderCheckCombo(ev);else renderCheck(ev);
+  const save=$("#saveBtn");
+  const miss=[];
+  if(!$("#f-cus").value.trim())miss.push("B1 Tên khách");
+  if(!$("#f-svc").value)miss.push("B2 Dịch vụ");
+  if(!$("#f-time").value)miss.push("B3 Giờ bắt đầu");
+  $("#missing").textContent=miss.length?"Cần nhập: "+miss.join(", "):"";
+  [["#f-cus","B1 Tên khách"],["#f-svc","B2 Dịch vụ"],["#f-time","B3 Giờ bắt đầu"]].forEach(([id,n])=>$(id).closest(".field").classList.toggle("need",showNeed&&miss.includes(n)));
+  save.disabled=readOnly||!store||miss.length>0||!(ev.status==="ok");
+  renderTimeline(ev);
+  return ev;
+}
+function resetForm(){
+  editingId=null;editingIds=new Set();delArmed=false;
+  showNeed=false;
+  $("#extraParts").innerHTML="";renumberParts();
+  ["#f-cus","#f-phone","#f-note"].forEach(s=>$(s).value="");
+  $("#f-svc").value="";$("#f-time").value="";$("#f-staff").value="";
+  $("#formTitle").innerHTML="Thêm lịch hẹn";
+  $("#cancelEdit").hidden=true;$("#delBtn").hidden=true;$("#delBtn").textContent="Xoá lịch";
+  $("#saveBtn").textContent="Lưu lịch hẹn";
+  refreshForm();
+}
+function startEdit(id){
+  let b=dayBookings.find(x=>x.id===id);if(!b)return;
+  const grp=b.groupId?dayBookings.filter(x=>x.groupId===b.groupId).sort((a,c)=>(a.part||0)-(c.part||0)||a.start-c.start):[b];
+  b=grp[0];
+  editingId=b.id;editingIds=new Set(grp.map(x=>x.id));delArmed=false;
+  $("#extraParts").innerHTML="";
+  $("#f-cus").value=b.customer||"";$("#f-phone").value=b.phone||"";$("#f-note").value=b.note||"";
+  if(!svc(b.serviceId)){toast("Dịch vụ của lịch này đã bị xoá khỏi danh sách.")}
+  $("#f-svc").value=b.serviceId;
+  fillTimeSelect();$("#f-time").value=String(b.start);
+  if(String($("#f-time").value)!==String(b.start)){$("#f-time").insertAdjacentHTML("beforeend",`<option value="${b.start}">${hm(b.start)}</option>`);$("#f-time").value=String(b.start)}
+  fillStaffSelect();$("#f-staff").value=b.staffId;
+  for(let i=1;i<grp.length;i++){const x=grp[i],pv=grp[i-1];addPartRow({sid:x.serviceId,kid:x.staffId})}
+  renumberParts();
+  $("#formTitle").innerHTML='Sửa lịch hẹn<span class="editing-tag">'+esc(b.customer)+(grp.length>1?" · "+grp.length+" DV":"")+'</span>';
+  $("#cancelEdit").hidden=false;$("#delBtn").hidden=readOnly;$("#delBtn").textContent="Xoá lịch";
+  $("#saveBtn").textContent="Cập nhật";
+  refreshForm();
+  if(window.innerWidth<900)$("#form").scrollIntoView({behavior:"smooth"});
+}
+async function saveBooking(force){
+  if(readOnly||!store)return;
+  const cus=$("#f-cus").value.trim();
+  if(!cus||!$("#f-svc").value||!$("#f-time").value){showNeed=true;refreshForm();toast("Chưa nhập đủ thông tin bắt buộc.");(!cus?$("#f-cus"):!$("#f-svc").value?$("#f-svc"):$("#f-time")).focus();return}
+  if(isCombo()||editingIds.size>1){await saveCombo(cus);return}
+  const ev=evaluate();
+  if(ev.status==="incomplete"||ev.status==="noqual"){toast("Chọn dịch vụ, giờ và KTV.");return}
+  if(ev.status!=="ok"){toast("Chỉ lưu được khi KTV đang đi làm, rảnh và làm được dịch vụ này.");return}
+  const staffId=ev.assign||$("#f-staff").value;
+  if(!staffId){toast("Chọn KTV để lưu.");return}
+  const k=stf(staffId);
+  const b={date:day,start:ev.t,dur:ev.s.dur,buf:svcBuf(ev.s),customer:cus,phone:$("#f-phone").value.trim(),note:$("#f-note").value.trim(),
+    serviceId:ev.s.id,serviceName:ev.s.name,staffId,staffName:k.name,auto:!!ev.auto,groupId:null,part:1,parts:1,updatedAt:Date.now()};
+  const btn=$("#saveBtn");btn.disabled=true;
+  try{
+    if(editingId)await store.updateBooking(editingId,b);else await store.addBooking(b);
+    toast(`Đã lưu: ${cus} · ${ev.s.name} · ${k.name} ${hm(ev.t)}–${hm(ev.t+ev.s.dur)}`);
+    resetForm();
+  }catch(e){handleWriteError(e);btn.disabled=false}
+}
+
+/* ---------- timeline ---------- */
+function colorFor(sid){const i=cfg.services.findIndex(s=>s.id===sid);return PALETTE[(i<0?9:i)%PALETTE.length]}
+function clashIds(){
+  const ids=new Set();
+  for(const a of dayBookings)for(const b of dayBookings){
+    if(a.id<b.id&&a.staffId===b.staffId&&a.start<b.start+span(b)&&b.start<a.start+span(a)){ids.add(a.id);ids.add(b.id)}
+  }
+  return ids;
+}
+const PX=1.3;
+function renderTimeline(ev){
+  const o=toMin(cfg.openTime);
+  const maxEnd=Math.max(toMin(cfg.closeTime),...dayBookings.map(b=>b.start+span(b)),ev&&ev.L?ev.t+ev.L:0,...((ev&&ev.ghosts)||[]).map(g=>g.start+g.len));
+  const c=Math.ceil(maxEnd/60)*60;
+  const shown=cfg.staff.filter(k=>!isOff(k.id)||dayBookings.some(b=>b.staffId===k.id));
+  const H=(c-o)*PX, n=shown.length;
+  const clashes=clashIds();
+  const cols=`48px repeat(${n},minmax(118px,1fr))`;
+  let head=`<div class="tl tl-head" style="grid-template-columns:${cols}"><div class="gut"></div>`+
+    shown.map(k=>{const cnt=dayBookings.filter(b=>b.staffId===k.id).length;const off=isOff(k.id);return `<div class="hc${off?" offc":""}"><div class="n">${esc(k.name)}</div><div class="m">${off?"NGHỈ · "+cnt+" lịch cần chuyển":(shiftLabel(k.id)?'<b style="color:var(--amber)">'+shiftLabel(k.id)+"</b> · ":"")+cnt+" lịch"}</div></div>`}).join("")+"</div>";
+  let hours="";for(let t=Math.ceil(o/60)*60;t<c;t+=60)hours+=`<div style="top:${(t-o)*PX}px">${hm(t)}</div>`;
+  const grid=`background-image:repeating-linear-gradient(to bottom,#f3e3ea 0 1px,transparent 1px ${30*PX}px);background-position:0 ${((60-(o%60))%60)*PX}px`;
+  const ghosts=ev&&ev.combo?(ev.ghosts||[]):null;
+  const ghostStaff=!ghosts&&ev&&(ev.status==="ok"||ev.status==="conflict"||ev.status==="skill"||ev.status==="off"||ev.status==="shift")?(ev.assign||$("#f-staff").value):null;
+  const nowTop=day===todayStr()&&nowMin()>=o&&nowMin()<=c?(nowMin()-o)*PX:null;
+  let body=`<div class="tl" style="grid-template-columns:${cols}"><div class="gut hours" style="height:${H}px">${hours}</div>`;
+  for(const k of shown){
+    let inner="";
+    for(const b of dayBookings.filter(x=>x.staffId===k.id)){
+      const top=(b.start-o)*PX,h=Math.max(b.dur*PX,18);
+      inner+=`<div class="blk${clashes.has(b.id)||!inShift(b.staffId,b.start,b.dur)?" clash":""}" data-id="${esc(b.id)}" style="top:${top}px;height:${h}px;background:${colorFor(b.serviceId)}${editingIds.has(b.id)||b.id===editingId?";opacity:.35":""}" title="${esc(b.customer)} · ${esc(b.serviceName)}${b.note?" · "+esc(b.note):""}"><div class="t">${hm(b.start)}–${hm(b.start+b.dur)}${b.parts>1?' <span class="tag-grp">DV'+b.part+'/'+b.parts+'</span>':""}</div>${esc(b.customer)} · ${esc(b.serviceName)}</div>`;
+      if(b.buf)inner+=`<div class="buf" style="top:${top+b.dur*PX}px;height:${b.buf*PX}px"></div>`;
+    }
+    if(ghosts)ghosts.filter(g=>g.staffId===k.id).forEach(g=>{inner+=`<div class="ghost${g.ok?"":" bad"}" style="top:${(g.start-o)*PX}px;height:${g.len*PX}px">${g.ok?"Lịch mới":"Vướng!"} ${hm(g.start)}</div>`});
+    if(ghostStaff===k.id&&ev.L){
+      inner+=`<div class="ghost${ev.status==="ok"?"":" bad"}" style="top:${(ev.t-o)*PX}px;height:${ev.L*PX}px">${ev.status==="ok"?"Lịch mới":ev.status==="shift"?"Giờ nghỉ!":ev.status==="skill"?"Sai kỹ năng!":"Trùng!"} ${hm(ev.t)}</div>`;
+    }
+    const st=shiftOf(k.id);
+    {const w=offWindow(st);if(w){const a=Math.max(w[0],o),z=Math.min(w[1],c);if(z>a)inner+=`<div class="outshift" style="top:${(a-o)*PX}px;height:${(z-a)*PX}px">${esc(ST_TXT[st])}<br>${esc(rangeTxt(st))}</div>`;}}
+    if(nowTop!=null)inner+=`<div class="nowline" style="top:${nowTop}px"></div>`;
+    body+=`<div class="col${isOff(k.id)?" offc":""}" data-st="${esc(k.id)}" style="height:${H}px;${grid}">${inner}</div>`;
+  }
+  body+="</div>";
+  $("#timeline").innerHTML=n?head+body:`<div class="empty">${cfg.staff.length?"Không có KTV nào đi làm hôm nay. Bấm tên KTV ở thanh “KTV đi làm” để bật.":"Chưa có KTV nào. Thêm KTV ở tab “KTV &amp; Dịch vụ”."}</div>`;
+}
+function renderList(){
+  const clashes=clashIds();
+  const rows=dayBookings.slice().sort((a,b)=>a.start-b.start||String(a.staffName).localeCompare(b.staffName));
+  const total=rows.length;
+  const outB=b=>{const k=stf(b.staffId);return k&&!inShift(b.staffId,b.start,b.dur)};const offB=rows.filter(outB).length;
+  $("#daytitle").textContent="Lịch hôm nay · "+viDate(day);
+  $("#daystats").textContent=total+" lịch hẹn"+(clashes.size?" · ⚠ "+clashes.size+" lịch đang trùng":"")+(offB?" · ⚠ "+offB+" lịch ngoài giờ làm của KTV":"");
+  if(!total){$("#list").innerHTML='<div class="empty">Chưa có lịch hẹn nào trong ngày này.</div>';return}
+  $("#list").innerHTML=`<table class="list"><thead><tr><th>Giờ</th><th>Khách</th><th>Dịch vụ</th><th>KTV</th><th>Ghi chú</th><th></th></tr></thead><tbody>`+
+    rows.map(b=>{const k=stf(b.staffId);const off=outB(b);return `<tr class="${clashes.has(b.id)?"clash":(off?"offrow":"")}"><td><b>${hm(b.start)}</b>–${hm(b.start+b.dur)}</td><td>${esc(b.customer)}${b.phone?`<br><small style="color:var(--mute)">${esc(b.phone)}</small>`:""}</td><td>${esc(b.serviceName)}${b.parts>1?'<span class="tag-grp">DV'+b.part+'/'+b.parts+'</span>':""}</td><td>${esc(k?k.name:b.staffName+" (đã xoá)")}${off?'<span class="tag-off">'+(isOff(b.staffId)?"nghỉ":"ngoài giờ làm")+' – cần chuyển</span>':""}</td><td>${esc(b.note)}</td><td><button class="btn small" data-edit="${esc(b.id)}">Sửa</button></td></tr>`}).join("")+"</tbody></table>";
+}
+let attPick=null;
+function renderAtt(){
+  const ov=dayMeta.override||{};
+  const on=working().length;
+  const hasOv=Object.keys(ov).some(id=>stf(id));
+  let h=`<span class="lbl">KTV đi làm hôm nay ${on}/${cfg.staff.length}</span>`+
+    cfg.staff.map(k=>{const st=shiftOf(k.id);const changed=ov[k.id]!=null;
+      const extra=st!=="on"&&st!=="off"?" · "+esc(halfTxt(st)):"";
+      return `<button type="button" class="chip ${st==="off"?"off":st==="on"?"on":"half"}${changed?" ov":""}${attPick===k.id?" sel":""}" data-att="${esc(k.id)}" title="${ST_TXT[st]}${!changed&&weeklyOff(k)?" (lịch cố định "+WD[weekday(day)]+")":""}">${esc(k.name)}${extra}</button>`}).join("")+
+    (hasOv?`<button type="button" class="btn small" id="attReset">Về lịch cố định</button>`:"");
+  if(attPick&&stf(attPick)){
+    const k=stf(attPick),cur=shiftOf(k.id);
+    h+=`<div class="attpick"><b>${esc(k.name)}:</b>`+SHIFTS.map(v=>`<button type="button" class="chip ${v===cur?"cur":""}" data-setatt="${v}">${ST_TXT[v]}${rangeTxt(v)?" ("+esc(rangeTxt(v))+")":""}</button>`).join("")+`<button type="button" class="x" data-closeatt="1" title="Đóng">✕</button></div>`;
+  }else h+=`<span class="mute">Bấm tên để chọn: đi làm / nghỉ sớm / nghỉ nửa buổi / nghỉ cả ngày</span>`;
+  $("#att").innerHTML=h;
+}
+async function setAtt(id,val){
+  if(readOnly||!store){toast("Bạn chỉ có quyền xem.");return}
+  const k=stf(id);if(!k)return;
+  const ov=Object.assign({},dayMeta.override||{});
+  const def=weeklyState(k);
+  if(val===def)delete ov[id];else ov[id]=val;
+  const prev=dayMeta;dayMeta={override:ov};attPick=null;renderDay();
+  try{await store.saveDayMeta(day,{override:ov,updatedAt:Date.now()})}
+  catch(e){dayMeta=prev;renderDay();handleWriteError(e);return}
+  const bad=dayBookings.filter(b=>b.staffId===id&&!inShift(id,b.start,b.dur)).length;
+  toast(`${k.name}: ${ST_TXT[val]}`+(bad?` — ${bad} lịch ngoài giờ, cần chuyển cho KTV khác`:""));
+}
+function renderDay(){
+  renderAtt();renderList();refreshForm();
+}
+
+/* ---------- setup tab ---------- */
+function beginDraft(){draft=clone(cfg);dirty=false;renderSetup()}
+function markDirty(){dirty=true;$("#savebar").hidden=false}
+function renderSetup(){
+  if(!draft)draft=clone(cfg);
+  $("#defaultBanner").hidden=!cfgIsDefault;
+  $("#s-open").value=draft.openTime;$("#s-last").value=draft.lastStart;$("#s-close").value=draft.closeTime;$("#s-amt").value=draft.amTo;$("#s-pmf").value=draft.pmFrom;$("#s-hamf").value=draft.hamFrom;$("#s-hamt").value=draft.hamTo;$("#s-hpmf").value=draft.hpmFrom;$("#s-hpmt").value=draft.hpmTo;$("#s-buf").value=draft.buffer;
+  $("#svcRows").innerHTML=draft.services.map((s,i)=>`<tr><td><input type="text" data-sv="${i}" data-f="name" value="${esc(s.name)}"></td><td><input type="number" min="5" step="5" data-sv="${i}" data-f="dur" value="${s.dur}"></td><td><input type="number" min="5" step="5" data-sv="${i}" data-f="hold" value="${holdOf(s,draft)}" title="${s.hold!=null&&s.hold!==""?"Đã chỉnh riêng":"Mặc định = phút làm + "+(+draft.buffer||0)+"p dọn"}" style="${(parseInt(s.hold,10)||0)&&+s.hold<+s.dur?"border-color:var(--warn);color:var(--warn)":(s.hold!=null&&s.hold!==""?"font-weight:600":"color:var(--mute)")}"></td><td><button class="x" data-delsv="${i}" title="Xoá">✕</button></td></tr>`).join("");
+  const sv=draft.services;
+  const wkOrder=[1,2,3,4,5,6,0];
+  $("#mx").innerHTML=`<thead><tr><th>KTV</th>${sv.map(s=>`<th class="sv">${esc(s.name)}</th>`).join("")}<th class="sv">Tất cả</th><th style="vertical-align:bottom">Lịch nghỉ cố định hằng tuần</th><th></th></tr></thead><tbody>`+
+    draft.staff.map((k,i)=>{const all=sv.every(s=>(k.skills||[]).includes(s.id));return `<tr><td class="nm"><input type="text" data-st="${i}" value="${esc(k.name)}"></td>${sv.map(s=>`<td class="c"><input type="checkbox" data-sk="${i}" data-sid="${esc(s.id)}" ${(k.skills||[]).includes(s.id)?"checked":""}></td>`).join("")}<td class="c"><input type="checkbox" data-all="${i}" ${all?"checked":""}></td><td><div class="wk">${wkOrder.map(d=>{const w=weeklyState(k,d);return `<button type="button" class="${w==="on"?"on":w==="off"?"off":"half"}" data-wk="${i}" data-d="${d}" title="${WD[d]}: ${ST_TXT[w]} — bấm để đổi">${WD[d]}${ST_SHORT[w]?"<small>"+ST_SHORT[w]+"</small>":""}</button>`}).join("")}</div></td><td><button class="x" data-delst="${i}" title="Xoá KTV">✕</button></td></tr>`}).join("")+
+    `</tbody><tfoot><tr><td style="font-size:12px;color:var(--mute)">Số KTV làm được</td>${sv.map(s=>{const c=draft.staff.filter(k=>(k.skills||[]).includes(s.id)).length;return `<td class="c" style="font-size:12px;${c?"":"color:var(--warn);font-weight:700"}">${c}</td>`}).join("")}<td></td><td style="font-size:12px;color:var(--mute)">Bấm để đổi: đi làm → nghỉ cả ngày (xám) → SS nghỉ sớm sáng → SC nghỉ sớm chiều → NS nghỉ nửa buổi sáng → NC nghỉ nửa buổi chiều</td><td></td></tr></tfoot>`;
+  $("#savebar").hidden=!dirty;
+}
+async function saveConfig(){
+  if(readOnly||!store)return;
+  const d=draft;
+  if(toMin(d.lastStart)<toMin(d.openTime)){toast("Giờ nhận khách cuối phải sau giờ mở cửa.");return}
+  if(!(toMin(d.amTo)>toMin(d.openTime))){toast("Nghỉ sớm sáng: giờ vào làm phải sau giờ mở cửa.");return}
+  if(!(toMin(d.hamTo)>toMin(d.hamFrom))){toast("Nghỉ nửa buổi sáng: giờ “Đến” phải sau giờ “Từ”.");return}
+  if(!(toMin(d.hpmTo)>toMin(d.hpmFrom))){toast("Nghỉ nửa buổi chiều: giờ “Đến” phải sau giờ “Từ”.");return}
+  d.services=d.services.filter(s=>s.name.trim()).map(s=>{const dur=Math.max(5,parseInt(s.dur,10)||5);const o={id:s.id,name:s.name.trim(),dur};
+    const h=parseInt(s.hold,10);if(s.hold!=null&&s.hold!==""&&!isNaN(h))o.hold=Math.max(dur,h);return o});
+  d.staff=d.staff.filter(k=>k.name.trim()).map(k=>({id:k.id,name:k.name.trim(),skills:(k.skills||[]).filter(id=>d.services.some(s=>s.id===id)),weekly:(()=>{const w={};for(let n=0;n<7;n++){const v=weeklyState(k,n);if(v!=="on")w[n]=v}return w})()}));
+  d.buffer=Math.max(0,parseInt(d.buffer,10)||0);
+  try{await store.saveConfig(d);dirty=false;cfg=clone(d);cfgIsDefault=false;draft=clone(d);renderSetup();applyConfig();toast("Đã lưu cài đặt.")}
+  catch(e){handleWriteError(e)}
+}
+
+/* ---------- wiring ---------- */
+function applyConfig(){
+  fillServiceSelect();fillTimeSelect();
+  $("#firstHint").hidden=true;
+  renderDay();
+  if(!dirty&&!$("#tab-setup").hidden)beginDraft();
+}
+function subscribeDay(){
+  if(unsubDay){unsubDay();unsubDay=null}
+  if(unsubMeta){unsubMeta();unsubMeta=null}
+  dayBookings=[];dayMeta={override:{}};renderDay();
+  if(!store)return;
+  const metaDay=day;
+  unsubMeta=store.subscribeDayMeta(day,m=>{
+    if(metaDay!==day)return;
+    dayMeta={override:(m&&m.override&&typeof m.override==="object")?m.override:{}};
+    renderDay();
+  },()=>{});
+  let timer=setTimeout(()=>setSync("Chưa tải được lịch — đang thử lại…"),10000);
+  unsubDay=store.subscribeDay(day,(list,meta)=>{
+    if(!meta||!meta.fromCache){clearTimeout(timer);setSync()}
+    dayBookings=list.filter(b=>typeof b.start==="number");
+    renderDay();
+  },e=>{clearTimeout(timer);setSync("Mất kết nối dữ liệu — tải lại trang")});
+}
+function setDay(d){if(!d)return;day=d;if(editingId)resetForm();subscribeDay()}
+
+document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b));
+  const t=b.dataset.tab;$("#tab-book").hidden=t!=="book";$("#tab-setup").hidden=t!=="setup";
+  if(t==="setup"&&!dirty)beginDraft();
+}));
+["#f-svc","#f-time","#f-staff"].forEach(s=>$(s).addEventListener("change",refreshForm));
+$("#f-cus").addEventListener("input",refreshForm);
+$("#addPart").addEventListener("click",()=>{addPartRow();refreshForm();const r=[...document.querySelectorAll("#extraParts .xp")].pop();if(r)r.querySelector(".xp-svc").focus()});
+$("#extraParts").addEventListener("change",refreshForm);
+$("#extraParts").addEventListener("click",e=>{const d=e.target.closest(".xp-del");if(d){d.closest(".xp").remove();renumberParts();refreshForm()}});
+$("#form").addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.tagName!=="TEXTAREA"&&e.target.tagName!=="BUTTON"){e.preventDefault();saveBooking(false)}});
+// bấm vào vùng nút Lưu khi đang bị khoá vì thiếu thông tin → chỉ ra ô còn thiếu
+$("#form .actions").addEventListener("click",e=>{if(e.target.closest("#saveBtn"))return;if($("#saveBtn").disabled&&$("#missing").textContent){showNeed=true;refreshForm()}});
+$("#form").addEventListener("submit",e=>{e.preventDefault();saveBooking(false)});
+$("#check").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-st]");
+  if(b){$("#f-time").value=b.dataset.t;fillStaffSelect();$("#f-staff").value=b.dataset.st;refreshForm();return}
+  const ct=e.target.closest("button[data-ct]");
+  if(ct){$("#f-time").value=ct.dataset.ct;refreshForm();return}
+  const cf=e.target.closest("button[data-cfix]");
+  if(cf){const i=+cf.dataset.cfix,st=cf.dataset.cst;
+    if(i===0){fillStaffSelect();$("#f-staff").value=st}
+    else{const sel=document.querySelectorAll("#extraParts .xp")[i-1].querySelector(".xp-staff");if(![...sel.options].some(o=>o.value===st)){const k=stf(st);sel.insertAdjacentHTML("beforeend",`<option value="${esc(st)}">${esc(k.name)}</option>`)}sel.value=st}
+    refreshForm();return}
+  const sw=e.target.closest("button[data-swap]");
+  if(sw){doSwap(lastSwaps[+sw.dataset.swap]);return}
+});
+async function doSwap(o){
+  if(!o||readOnly||!store)return;
+  const nb=Object.assign({},o.c,{staffId:o.to.id,staffName:o.to.name,updatedAt:Date.now()});
+  delete nb.id;
+  try{
+    await store.updateBooking(o.c.id,nb);
+    fillStaffSelect();$("#f-staff").value=o.k.id;refreshForm();
+    toast(`Đã chuyển ${o.c.customer} sang ${o.to.name}. ${o.k.name} giờ nhận khách mới.`);
+  }catch(e){handleWriteError(e)}
+}
+$("#cancelEdit").addEventListener("click",resetForm);
+$("#delBtn").addEventListener("click",async()=>{
+  if(!editingId||readOnly)return;
+  if(!delArmed){delArmed=true;$("#delBtn").textContent="Bấm lần nữa để xoá";return}
+  try{for(const id of (editingIds.size?[...editingIds]:[editingId]))await store.deleteBooking(id);toast("Đã xoá lịch hẹn.");resetForm()}catch(e){handleWriteError(e)}
+});
+$("#timeline").addEventListener("click",e=>{
+  const blk=e.target.closest(".blk");
+  if(blk){startEdit(blk.dataset.id);return}
+  const col=e.target.closest(".col");if(!col)return;
+  const y=e.clientY-col.getBoundingClientRect().top;
+  const o=toMin(cfg.openTime),l=toMin(cfg.lastStart),st=cfg.step||5;
+  let t=o+Math.round(y/PX/st)*st;t=Math.min(Math.max(t,o),l);
+  if(editingId)resetForm();
+  $("#f-time").value=String(t);fillStaffSelect();$("#f-staff").value=col.dataset.st;refreshForm();
+  if(window.innerWidth<900)$("#form").scrollIntoView({behavior:"smooth"});
+  ($("#f-svc").value?$("#f-cus"):$("#f-svc")).focus();
+});
+$("#att").addEventListener("click",async e=>{
+  const c=e.target.closest("[data-att]");if(c){attPick=attPick===c.dataset.att?null:c.dataset.att;renderAtt();return}
+  const sa=e.target.closest("[data-setatt]");if(sa&&attPick){setAtt(attPick,sa.dataset.setatt);return}
+  if(e.target.closest("[data-closeatt]")){attPick=null;renderAtt();return}
+  if(e.target.closest("#attReset")){
+    if(readOnly||!store)return;
+    const prev=dayMeta;dayMeta={override:{}};renderDay();
+    try{await store.saveDayMeta(day,{override:{},updatedAt:Date.now()});toast("Đã về lịch nghỉ cố định.")}catch(err){dayMeta=prev;renderDay();handleWriteError(err)}
+  }
+});
+$("#list").addEventListener("click",e=>{const b=e.target.closest("[data-edit]");if(b)startEdit(b.dataset.edit)});
+
+// setup events
+$("#tab-setup").addEventListener("input",e=>{
+  const el=e.target;if(!draft)return;
+  if(el.id==="s-open")draft.openTime=el.value;
+  else if(el.id==="s-last")draft.lastStart=el.value;
+  else if(el.id==="s-close")draft.closeTime=el.value;
+  else if(el.id==="s-amt")draft.amTo=el.value;
+  else if(el.id==="s-pmf")draft.pmFrom=el.value;
+  else if(el.id==="s-hamf")draft.hamFrom=el.value;
+  else if(el.id==="s-hamt")draft.hamTo=el.value;
+  else if(el.id==="s-hpmf")draft.hpmFrom=el.value;
+  else if(el.id==="s-hpmt")draft.hpmTo=el.value;
+  else if(el.id==="s-buf"){draft.buffer=el.value;markDirty();renderSetupKeepFocus(el);return}
+  else if(el.dataset.sv!=null){const s=draft.services[+el.dataset.sv];if(el.dataset.f==="dur"){s.dur=el.value;markDirty();renderSetupKeepFocus(el);return}if(el.dataset.f==="hold"){s.hold=el.value;markDirty();return}s.name=el.value}
+  else if(el.dataset.st!=null&&el.type==="text")draft.staff[+el.dataset.st].name=el.value;
+  else return;
+  markDirty();
+});
+function renderSetupKeepFocus(el){
+  const sel=el.id?"#"+el.id:`[data-sv="${el.dataset.sv}"][data-f="${el.dataset.f}"]`;const pos=el.selectionStart;
+  renderSetup();const n=document.querySelector(sel);if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}
+}
+$("#tab-setup").addEventListener("change",e=>{
+  const el=e.target;if(!draft)return;
+  if(el.dataset.sk!=null){const k=draft.staff[+el.dataset.sk];k.skills=k.skills||[];const id=el.dataset.sid;
+    if(el.checked){if(!k.skills.includes(id))k.skills.push(id)}else k.skills=k.skills.filter(x=>x!==id);markDirty();renderSetup()}
+  else if(el.dataset.all!=null){const k=draft.staff[+el.dataset.all];k.skills=el.checked?draft.services.map(s=>s.id):[];markDirty();renderSetup()}
+});
+$("#tab-setup").addEventListener("click",e=>{
+  const el=e.target;if(!draft)return;
+  if(el.dataset.delsv!=null){const s=draft.services.splice(+el.dataset.delsv,1)[0];draft.staff.forEach(k=>k.skills=(k.skills||[]).filter(x=>x!==s.id));markDirty();renderSetup()}
+  else if(el.closest("[data-wk]")){const bt=el.closest("[data-wk]");const k=draft.staff[+bt.dataset.wk];const d=+bt.dataset.d;
+    const nxt={on:"off",off:"am",am:"pm",pm:"ham",ham:"hpm",hpm:"on"}[weeklyState(k,d)];
+    k.weekly=Object.assign({},k.weekly||{});(k.weeklyOff||[]).forEach(x=>{if(k.weekly[x]==null)k.weekly[x]="off"});k.weeklyOff=[];
+    if(nxt==="on")delete k.weekly[d];else k.weekly[d]=nxt;markDirty();renderSetup()}
+  else if(el.dataset.delst!=null){draft.staff.splice(+el.dataset.delst,1);markDirty();renderSetup()}
+});
+$("#addSvc").addEventListener("click",()=>{draft.services.push({id:"s"+uid(),name:"Dịch vụ mới",dur:60});markDirty();renderSetup();const ins=document.querySelectorAll('[data-f="name"]');ins[ins.length-1].select()});
+$("#addStaff").addEventListener("click",()=>{draft.staff.push({id:"k"+uid(),name:"KTV mới",skills:[]});markDirty();renderSetup();const ins=document.querySelectorAll('#mx input[type=text]');ins[ins.length-1].select()});
+$("#saveCfg").addEventListener("click",saveConfig);
+$("#discardCfg").addEventListener("click",()=>{beginDraft();toast("Đã huỷ thay đổi.")});
+
+// tick "now" line every minute
+setInterval(()=>{
+  if(day!==todayStr()){setDay(todayStr());cleanupOld();return}   // sang ngày mới: lịch trống
+  if(!$("#tab-book").hidden)refreshForm();
+},60000);
+async function cleanupOld(){ if(store&&!readOnly&&store.cleanupBefore){try{await store.cleanupBefore(todayStr())}catch(e){}} }
+
+/* ---------- init ---------- */
+applyConfig();
+(async function init(){
+  let db=null;
+  try{
+    if(window.claude&&typeof window.claude.use==="function"){
+      db=await Promise.race([window.claude.use("db"),new Promise(r=>setTimeout(()=>r(null),10000))]);
+    }
+  }catch(e){db=null}
+  store=db?dbStore(db):localStore();
+  setSync();
+  store.subscribeConfig((c,meta)=>{
+    if(c&&Array.isArray(c.services)&&Array.isArray(c.staff)){
+      const m=clone(c);if(m.amStart&&!m.amTo)m.amTo=m.amStart;if(m.pmEnd&&!m.pmFrom)m.pmFrom=m.pmEnd;
+      delete m.amFrom;delete m.pmTo;   // cấu hình cũ
+      cfg=Object.assign(clone(DEFAULT_CONFIG),m);cfgIsDefault=false}
+    else{cfg=clone(DEFAULT_CONFIG);cfgIsDefault=true}
+    applyConfig();
+  },e=>setSync("Mất kết nối dữ liệu — tải lại trang"));
+  subscribeDay();
+  setTimeout(cleanupOld,3000);
+})();
+})();
+</script>
+</body>
+</html>
