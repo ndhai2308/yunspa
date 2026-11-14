@@ -1,0 +1,14 @@
+const { chromium } = require('/opt/npm-tools/node_modules/playwright');
+(async()=>{const b=await chromium.launch();const p=await (await b.newContext({viewport:{width:1300,height:900}})).newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
+ await p.clock.install({time:new Date('2026-11-14T08:00:00+07:00')});
+ await p.goto(process.argv[2]);await p.waitForTimeout(300);
+ const st=async l=>console.log(l,'| khoá:',await p.isDisabled('#saveBtn'),'|',await p.textContent('#missing'));
+ await st('Mở form');
+ await p.selectOption('#f-svc','goi');await p.selectOption('#f-time','600');await p.waitForTimeout(30);await st('Có DV+giờ, thiếu tên');
+ await p.keyboard.press('Enter');await p.focus('#f-phone');await p.keyboard.press('Enter');await p.waitForTimeout(50);
+ console.log('Enter khi thiếu tên → số lịch:',(await p.textContent('#daystats')),'| ô tên đỏ:',await p.$eval('#f-cus',e=>e.closest('.field').classList.contains('need')));
+ await p.fill('#f-cus','chị Lan');await p.waitForTimeout(30);await st('Đủ (không SĐT)');
+ await p.selectOption('#f-time','');await p.waitForTimeout(30);await st('Bỏ giờ');
+ await p.selectOption('#f-time','600');await p.click('#saveBtn');await p.waitForTimeout(60);console.log('Lưu:',await p.textContent('#daystats'));
+ await p.screenshot({path:'/tmp/req.png',clip:{x:20,y:180,width:370,height:650}});
+ console.log('errs',errs);await b.close();})();

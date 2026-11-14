@@ -1,0 +1,13 @@
+const L=require('./lib.js');
+(async()=>{const {b,p,errs}=await L.open();
+ await L.book(p,{cus:'A',svc:'goi',time:600,staff:'k1'});
+ let r=await L.fill(p,{cus:'B',svc:'goi',time:600,staff:'k1'});
+ console.log('Trùng → nút lưu khoá:',!r.canSave,'| còn nút "vẫn lưu":',await p.$('#forceBtn')!==null);
+ await p.keyboard.press('Enter'); await p.focus('#f-cus'); await p.keyboard.press('Enter'); await p.waitForTimeout(80);
+ console.log('Nhấn Enter khi trùng → số lịch:',(await L.state(p)).bookings.length);
+ r=await L.fill(p,{cus:'B',svc:'body60',time:700,staff:'k5'}); console.log('Sai kỹ năng → khoá:',!r.canSave);
+ await p.click('[data-att=\"k2\"]'); await p.click('[data-setatt=\"off\"]'); await p.waitForTimeout(50);
+ const opts=await p.$$eval('#f-staff option',o=>o.map(x=>x.textContent));
+ console.log('My nghỉ → còn trong danh sách chọn:',opts.some(x=>x.startsWith('My')));
+ console.log('Thứ tự (gội 10:00):',(await L.fill(p,{svc:'goi',time:600,staff:''}),await p.$$eval('#f-staff option',o=>o.map(x=>x.textContent).slice(0,9).join(' / '))));
+ console.log('audit',L.audit(await L.state(p)),'errs',errs);await b.close();})();
