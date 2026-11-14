@@ -1,4 +1,4 @@
-const { chromium } = require('/opt/npm-tools/node_modules/playwright');
+const { chromium } = require((()=>{for(const m of ['/opt/node-tools/node_modules/playwright','/opt/npm-tools/node_modules/playwright','playwright'])try{return require.resolve(m)}catch(e){}})());
 const CFG=require('./cfg.js');
 const FILE=process.argv[2]||'file:///home/claude/yunspa/index.html';
 async function open(extra){
@@ -7,6 +7,7 @@ async function open(extra){
   await p.addInitScript(([c,e])=>{ if(!sessionStorage.getItem('init')){sessionStorage.setItem('init','1');localStorage.setItem('yunspa-booking-v1',JSON.stringify(Object.assign({config:c,bookings:[],days:{}},e||{})));}},[CFG,extra]);
   const errs=[]; p.on('pageerror',e=>errs.push(e.message));
   await p.goto(FILE); await p.waitForTimeout(300);
+  await p.evaluate(()=>{const g=document.getElementById('gate');if(g)g.classList.add('ok')}); // bỏ qua màn đăng nhập khi thử
   return {b,p,errs};
 }
 async function fill(p,{cus='KH',svc,time,staff=''}){

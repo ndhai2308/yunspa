@@ -1,7 +1,7 @@
-const { chromium } = require('/opt/npm-tools/node_modules/playwright');
+const { chromium } = require((()=>{for(const m of ['/opt/node-tools/node_modules/playwright','/opt/npm-tools/node_modules/playwright','playwright'])try{return require.resolve(m)}catch(e){}})());
 (async()=>{const b=await chromium.launch();const p=await (await b.newContext({viewport:{width:1300,height:900}})).newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
  await p.clock.install({time:new Date('2026-11-14T08:00:00+07:00')});
- await p.goto(process.argv[2]);await p.waitForTimeout(300);
+ await p.goto(process.argv[2]);await p.waitForTimeout(300);await p.evaluate(()=>{const g=document.getElementById('gate');if(g)g.classList.add('ok')});
  const st=async l=>console.log(l,'| khoá:',await p.isDisabled('#saveBtn'),'|',await p.textContent('#missing'));
  await st('Mở form');
  await p.selectOption('#f-svc','goi');await p.selectOption('#f-time','600');await p.waitForTimeout(30);await st('Có DV+giờ, thiếu tên');
