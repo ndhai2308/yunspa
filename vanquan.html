@@ -166,6 +166,17 @@ table.list{width:100%;border-collapse:collapse;margin-top:16px;font-size:13.5px}
 .lockbtn{background:transparent;border:1px solid rgba(255,255,255,.7);color:#fff;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:13px;margin-left:8px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--brand);color:#fff;padding:10px 18px;border-radius:24px;font-size:13.5px;box-shadow:0 6px 20px rgba(0,0,0,.2);z-index:50;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.on{opacity:1}
+.reco.soft{border-color:#e0a100;background:#fff8e1}
+.tag-rsn{font-size:12px;color:#8a5a00;margin-top:2px}
+#rsn{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;padding:16px}
+#rsn[hidden]{display:none!important}
+.rsn-box{background:#fff;border-radius:14px;padding:18px;width:100%;max-width:400px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+.rsn-box .ttl{font-weight:700;font-size:17px;color:var(--brand);margin-bottom:6px}
+.rsn-box label{display:flex;gap:8px;align-items:flex-start;padding:7px 0;cursor:pointer}
+.rsn-box input[type=checkbox]{width:18px;height:18px;margin-top:2px;accent-color:var(--brand)}
+#rsn-text{width:100%;min-height:56px;padding:8px;border:1px solid var(--line);border-radius:8px;box-sizing:border-box}
+#rsn-err{color:var(--warn);font-size:14px;min-height:18px;margin:4px 0}
+.rsn-act{display:flex;gap:8px;justify-content:flex-end}
 </style>
 </head>
 <body>
@@ -285,6 +296,16 @@ table.list{width:100%;border-collapse:collapse;margin-top:16px;font-size:13.5px}
 </main>
 <div class="toast" id="toast"></div>
 
+<div id="rsn" hidden><div class="rsn-box" role="dialog" aria-modal="true">
+  <div class="ttl">Lý do lưu lấn giờ dọn</div>
+  <div id="rsn-desc"></div>
+  <label><input type="checkbox" data-r="KTV đã dọn xong sớm"> Tình hình thực tế: KTV đã dọn xong sớm</label>
+  <label><input type="checkbox" data-r="Khách đến sớm / làm xong sớm"> Tình hình thực tế: khách đến sớm / làm xong sớm</label>
+  <label><input type="checkbox" id="rsn-other"> Lý do khác</label>
+  <textarea id="rsn-text" placeholder="Ghi lý do khác…"></textarea>
+  <div id="rsn-err"></div>
+  <div class="rsn-act"><button type="button" class="btn" id="rsn-cancel">Huỷ</button><button type="button" class="btn primary" id="rsn-ok">Lưu lịch hẹn</button></div>
+</div></div>
 <script>
 (function(){
 "use strict";
@@ -531,6 +552,14 @@ function evaluate(){
   if(!(k.skills||[]).includes(sid))return Object.assign(r,{status:"skill",k,freeNow,sugg:freeNow.length?null:nearestAny(qualified,t,L,excl,5)});
   const clash=overlaps(kid,t,t+L,excl);
   if(!clash.length)return Object.assign(r,{status:"ok",assign:kid});
+  /* chỉ lấn vào phần DỌN (không chạm thời gian làm) → cho lưu nếu chọn lý do */
+  if(clash.every(b=>!(t<b.start+b.dur&&b.start<t+s.dur))){
+    const prev=clash.filter(b=>b.start<t), next=clash.filter(b=>b.start>=t+s.dur);
+    const ownBuf=next.length?Math.max(0,Math.min(svcBuf(s),Math.min(...next.map(b=>b.start))-(t+s.dur))):svcBuf(s);
+    const cuts=prev.map(b=>({b,buf:Math.max(0,t-b.start-b.dur)}));
+    const mins=Math.max(svcBuf(s)-ownBuf,...cuts.map(x=>(x.b.buf||0)-x.buf),0);
+    r.soft={ownBuf,cuts,mins};
+  }
   const fs=freeSlots(kid,L,excl);
   r.after=fs.find(x=>x>t);r.before=fs.filter(x=>x<t).pop();r.freeList=fs;r.otherNear=nearestPerStaff(qualified.filter(x=>x.id!==kid),t,L,excl,6);
   return Object.assign(r,{status:"conflict",k,clash,swaps:swapOptions([k],t,L,excl),same:nearestFor(kid,t,L,excl,4),freeNow:freeNow.filter(x=>x.id!==kid)});
@@ -780,6 +809,7 @@ function renderCheck(ev){
   }
   const kn=esc(ev.k.name);
   h+=`<div class="ttl">⚠ ${kn} đang bận lúc ${hm(ev.t)}</div>`+ev.clash.map(b=>`<div>${kn} đang làm <b>${esc(b.customer)}</b> (${esc(b.serviceName)}) ${hm(b.start)}–${hm(b.start+b.dur)}${b.buf?", dọn xong "+hm(b.start+span(b)):""}.</div>`).join("")+notes;
+  if(ev.soft&&!readOnly)h+=`<div class="reco soft">⏱ Chỉ lấn vào <b>${ev.soft.mins} phút dọn</b>, không trùng giờ làm. Nếu thực tế ${kn} đã dọn xong sớm hoặc khách đến sớm, vẫn lưu được kèm lý do.<button type="button" class="recobtn" id="softBtn">Vẫn lưu với ${kn} lúc ${hm(ev.t)} – chọn lý do</button></div>`;
   if(ev.after!=null||ev.before!=null){
     const main=ev.after!=null?ev.after:ev.before, late=main>ev.t;
     h+=`<div class="reco">👉 Nếu khách vẫn muốn <b>${kn}</b> làm: xin khách ${late?"lùi":"đến sớm"} sang <b>${hm(main)}</b> (${late?"muộn":"sớm"} ${Math.abs(main-ev.t)} phút)`+
@@ -811,7 +841,7 @@ function refreshForm(){
   return ev;
 }
 function resetForm(){
-  editingId=null;editingIds=new Set();delArmed=false;
+  editingId=null;editingIds=new Set();delArmed=false;editReason="";
   showNeed=false;
   $("#extraParts").innerHTML="";renumberParts();
   ["#f-cus","#f-phone","#f-note"].forEach(s=>$(s).value="");
@@ -825,7 +855,7 @@ function startEdit(id){
   let b=dayBookings.find(x=>x.id===id);if(!b)return;
   const grp=b.groupId?dayBookings.filter(x=>x.groupId===b.groupId).sort((a,c)=>(a.part||0)-(c.part||0)||a.start-c.start):[b];
   b=grp[0];
-  editingId=b.id;editingIds=new Set(grp.map(x=>x.id));delArmed=false;
+  editingId=b.id;editingIds=new Set(grp.map(x=>x.id));delArmed=false;editReason=b.bufReason||"";
   $("#extraParts").innerHTML="";
   $("#f-cus").value=b.customer||"";$("#f-phone").value=b.phone||"";$("#f-note").value=b.note||"";
   if(!svc(b.serviceId)){toast("Dịch vụ của lịch này đã bị xoá khỏi danh sách.")}
@@ -841,21 +871,24 @@ function startEdit(id){
   refreshForm();
   if(window.innerWidth<900)$("#form").scrollIntoView({behavior:"smooth"});
 }
-async function saveBooking(force){
+async function saveBooking(force,reason){
   if(readOnly||!store)return;
   const cus=$("#f-cus").value.trim();
   if(!cus||!$("#f-svc").value||!$("#f-time").value){showNeed=true;refreshForm();toast("Chưa nhập đủ thông tin bắt buộc.");(!cus?$("#f-cus"):!$("#f-svc").value?$("#f-svc"):$("#f-time")).focus();return}
   if(isCombo()||editingIds.size>1){await saveCombo(cus);return}
   const ev=evaluate();
   if(ev.status==="incomplete"||ev.status==="noqual"){toast("Chọn dịch vụ, giờ và KTV.");return}
-  if(ev.status!=="ok"){toast("Chỉ lưu được khi KTV đang đi làm, rảnh và làm được dịch vụ này.");return}
+  const soft=ev.status==="conflict"&&ev.soft&&reason?ev.soft:null;
+  if(ev.status!=="ok"&&!soft){if(ev.soft){openReason(ev);return}toast("Chỉ lưu được khi KTV đang đi làm, rảnh và làm được dịch vụ này.");return}
   const staffId=ev.assign||$("#f-staff").value;
   if(!staffId){toast("Chọn KTV để lưu.");return}
   const k=stf(staffId);
   const b={date:day,start:ev.t,dur:ev.s.dur,buf:svcBuf(ev.s),customer:cus,phone:$("#f-phone").value.trim(),note:$("#f-note").value.trim(),
     serviceId:ev.s.id,serviceName:ev.s.name,staffId,staffName:k.name,auto:!!ev.auto,groupId:null,part:1,parts:1,updatedAt:Date.now()};
+  if(soft){b.buf=soft.ownBuf;b.bufReason=reason;b.bufOverlap=soft.mins}
   const btn=$("#saveBtn");btn.disabled=true;
   try{
+    if(soft)for(const x of soft.cuts){const nb=Object.assign({},x.b,{buf:x.buf,bufCut:(x.b.buf||0)-x.buf,bufCutReason:reason,updatedAt:Date.now()});delete nb.id;await store.updateBooking(x.b.id,nb)}
     if(editingId)await store.updateBooking(editingId,b);else await store.addBooking(b);
     toast(`Đã lưu: ${cus} · ${ev.s.name} · ${k.name} ${hm(ev.t)}–${hm(ev.t+ev.s.dur)}`);
     resetForm();
@@ -892,7 +925,7 @@ function renderTimeline(ev){
     let inner="";
     for(const b of dayBookings.filter(x=>x.staffId===k.id)){
       const top=(b.start-o)*PX,h=Math.max(b.dur*PX,18);
-      inner+=`<div class="blk${clashes.has(b.id)||!inShift(b.staffId,b.start,b.dur)?" clash":""}" data-id="${esc(b.id)}" style="top:${top}px;height:${h}px;background:${colorFor(b.serviceId)}${editingIds.has(b.id)||b.id===editingId?";opacity:.35":""}" title="${esc(b.customer)} · ${esc(b.serviceName)}${b.note?" · "+esc(b.note):""}"><div class="t">${hm(b.start)}–${hm(b.start+b.dur)}${b.parts>1?' <span class="tag-grp">DV'+b.part+'/'+b.parts+'</span>':""}</div>${esc(b.customer)} · ${esc(b.serviceName)}</div>`;
+      inner+=`<div class="blk${clashes.has(b.id)||!inShift(b.staffId,b.start,b.dur)?" clash":""}" data-id="${esc(b.id)}" style="top:${top}px;height:${h}px;background:${colorFor(b.serviceId)}${editingIds.has(b.id)||b.id===editingId?";opacity:.35":""}" title="${esc(b.customer)} · ${esc(b.serviceName)}${b.note?" · "+esc(b.note):""}${b.bufReason?" · ⏱ lấn "+(b.bufOverlap||"")+"p dọn: "+esc(b.bufReason):""}"><div class="t">${hm(b.start)}–${hm(b.start+b.dur)}${b.parts>1?' <span class="tag-grp">DV'+b.part+'/'+b.parts+'</span>':""}</div>${esc(b.customer)} · ${esc(b.serviceName)}</div>`;
       if(b.buf)inner+=`<div class="buf" style="top:${top+b.dur*PX}px;height:${b.buf*PX}px"></div>`;
     }
     if(ghosts)ghosts.filter(g=>g.staffId===k.id).forEach(g=>{inner+=`<div class="ghost${g.ok?"":" bad"}" style="top:${(g.start-o)*PX}px;height:${g.len*PX}px">${g.ok?"Lịch mới":"Vướng!"} ${hm(g.start)}</div>`});
@@ -916,7 +949,7 @@ function renderList(){
   $("#daystats").textContent=total+" lịch hẹn"+(clashes.size?" · ⚠ "+clashes.size+" lịch đang trùng":"")+(offB?" · ⚠ "+offB+" lịch ngoài giờ làm của KTV":"");
   if(!total){$("#list").innerHTML='<div class="empty">Chưa có lịch hẹn nào trong ngày này.</div>';return}
   $("#list").innerHTML=`<table class="list"><thead><tr><th>Giờ</th><th>Khách</th><th>Dịch vụ</th><th>KTV</th><th>Ghi chú</th><th></th></tr></thead><tbody>`+
-    rows.map(b=>{const k=stf(b.staffId);const off=outB(b);return `<tr class="${clashes.has(b.id)?"clash":(off?"offrow":"")}"><td><b>${hm(b.start)}</b>–${hm(b.start+b.dur)}</td><td>${esc(b.customer)}${b.phone?`<br><small style="color:var(--mute)">${esc(b.phone)}</small>`:""}</td><td>${esc(b.serviceName)}${b.parts>1?'<span class="tag-grp">DV'+b.part+'/'+b.parts+'</span>':""}</td><td>${esc(k?k.name:b.staffName+" (đã xoá)")}${off?'<span class="tag-off">'+(isOff(b.staffId)?"nghỉ":"ngoài giờ làm")+' – cần chuyển</span>':""}</td><td>${esc(b.note)}</td><td><button class="btn small" data-edit="${esc(b.id)}">Sửa</button></td></tr>`}).join("")+"</tbody></table>";
+    rows.map(b=>{const k=stf(b.staffId);const off=outB(b);return `<tr class="${clashes.has(b.id)?"clash":(off?"offrow":"")}"><td><b>${hm(b.start)}</b>–${hm(b.start+b.dur)}</td><td>${esc(b.customer)}${b.phone?`<br><small style="color:var(--mute)">${esc(b.phone)}</small>`:""}</td><td>${esc(b.serviceName)}${b.parts>1?'<span class="tag-grp">DV'+b.part+'/'+b.parts+'</span>':""}</td><td>${esc(k?k.name:b.staffName+" (đã xoá)")}${off?'<span class="tag-off">'+(isOff(b.staffId)?"nghỉ":"ngoài giờ làm")+' – cần chuyển</span>':""}</td><td>${esc(b.note)}${b.bufReason?`<div class="tag-rsn">⏱ Lấn ${b.bufOverlap||""} phút dọn: ${esc(b.bufReason)}</div>`:""}</td><td><button class="btn small" data-edit="${esc(b.id)}">Sửa</button></td></tr>`}).join("")+"</tbody></table>";
 }
 let attPick=null;
 function renderAtt(){
@@ -1033,6 +1066,30 @@ $("#check").addEventListener("click",e=>{
     refreshForm();return}
   const sw=e.target.closest("button[data-swap]");
   if(sw){doSwap(lastSwaps[+sw.dataset.swap]);return}
+  if(e.target.closest("#softBtn")){openReason();return}
+});
+/* ---------- cửa sổ chọn lý do khi lấn giờ dọn ---------- */
+let editReason="";
+function openReason(ev){
+  ev=ev||evaluate();if(!ev.soft||readOnly)return;
+  const m=$("#rsn");
+  $("#rsn-desc").innerHTML=`<b>${esc(ev.k.name)}</b> nhận khách lúc <b>${hm(ev.t)}</b>, lấn ${ev.soft.mins} phút vào thời gian dọn. Chọn lý do:`;
+  const parts=editReason?editReason.split(" · "):[];
+  m.querySelectorAll("input[data-r]").forEach(c=>{c.checked=parts.includes(c.dataset.r)});
+  const other=parts.filter(x=>!["KTV đã dọn xong sớm","Khách đến sớm / làm xong sớm"].includes(x)).map(x=>x.replace(/^Khác: /,"")).join(" · ");
+  $("#rsn-other").checked=!!other;$("#rsn-text").value=other;$("#rsn-err").textContent="";
+  m.hidden=false;
+}
+function closeReason(){$("#rsn").hidden=true}
+$("#rsn-cancel").addEventListener("click",closeReason);
+$("#rsn").addEventListener("click",e=>{if(e.target.id==="rsn")closeReason()});
+$("#rsn-text").addEventListener("input",()=>{if($("#rsn-text").value.trim())$("#rsn-other").checked=true});
+$("#rsn-ok").addEventListener("click",()=>{
+  const r=[...$("#rsn").querySelectorAll("input[data-r]:checked")].map(c=>c.dataset.r);
+  const txt=$("#rsn-text").value.trim();
+  if($("#rsn-other").checked){if(!txt){$("#rsn-err").textContent="Ghi rõ lý do khác.";$("#rsn-text").focus();return}r.push("Khác: "+txt)}
+  if(!r.length){$("#rsn-err").textContent="Chọn ít nhất một lý do.";return}
+  closeReason();saveBooking(false,r.join(" · "));
 });
 async function doSwap(o){
   if(!o||readOnly||!store)return;
