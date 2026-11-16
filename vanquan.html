@@ -297,7 +297,7 @@ table.list{width:100%;border-collapse:collapse;margin-top:16px;font-size:13.5px}
 <div class="toast" id="toast"></div>
 
 <div id="rsn" hidden><div class="rsn-box" role="dialog" aria-modal="true">
-  <div class="ttl">Lý do lưu lấn giờ dọn</div>
+  <div class="ttl">Lý do đặt sớm hơn giờ KTV rảnh</div>
   <div id="rsn-desc"></div>
   <label><input type="checkbox" data-r="KTV đã dọn xong sớm"> Tình hình thực tế: KTV đã dọn xong sớm</label>
   <label><input type="checkbox" data-r="Khách đến sớm / làm xong sớm"> Tình hình thực tế: khách đến sớm / làm xong sớm</label>
@@ -345,7 +345,7 @@ function sha256(str){ // SHA-256 thuần JS (chạy cả khi mở file trực ti
 const SVC0=[["goi","Gội đầu",45],["csd","Chăm sóc da",80],["nangco","Nâng cơ",90],["cvg","cvg 30'",40],["cvg60","cvg 60'",70],["body60","Body (60 phút)",70],["body90","Body (90 phút)",100],["masschan","Massa chân",55],["chagot","Chà gót",40]];
 const STAFF0=BRANCH.staff||[];
 const DEFAULT_CONFIG={
-  openTime:"09:00",lastStart:"19:50",closeTime:"21:30",buffer:10,step:5,amTo:"10:30",pmFrom:"18:30",hamFrom:"09:00",hamTo:"14:00",hpmFrom:"14:00",hpmTo:"21:30",
+  openTime:"09:00",lastStart:"19:50",closeTime:"21:30",buffer:10,earlyMax:30,step:5,amTo:"10:30",pmFrom:"18:30",hamFrom:"09:00",hamTo:"14:00",hpmFrom:"14:00",hpmTo:"21:30",
   services:SVC0.map(([id,name,dur])=>({id,name,dur})),
   staff:STAFF0.map(([n,sk],i)=>({id:"k"+(i+1),name:n,skills:sk.slice(),weekly:{}}))
 };
@@ -552,13 +552,21 @@ function evaluate(){
   if(!(k.skills||[]).includes(sid))return Object.assign(r,{status:"skill",k,freeNow,sugg:freeNow.length?null:nearestAny(qualified,t,L,excl,5)});
   const clash=overlaps(kid,t,t+L,excl);
   if(!clash.length)return Object.assign(r,{status:"ok",assign:kid});
-  /* chỉ lấn vào phần DỌN (không chạm thời gian làm) → cho lưu nếu chọn lý do */
-  if(clash.every(b=>!(t<b.start+b.dur&&b.start<t+s.dur))){
-    const prev=clash.filter(b=>b.start<t), next=clash.filter(b=>b.start>=t+s.dur);
-    const ownBuf=next.length?Math.max(0,Math.min(svcBuf(s),Math.min(...next.map(b=>b.start))-(t+s.dur))):svcBuf(s);
-    const cuts=prev.map(b=>({b,buf:Math.max(0,t-b.start-b.dur)}));
-    const mins=Math.max(svcBuf(s)-ownBuf,...cuts.map(x=>(x.b.buf||0)-x.buf),0);
-    r.soft={ownBuf,cuts,mins};
+  /* Đặt sớm hơn giờ KTV rảnh tối đa earlyMax phút (thực tế KTV xong/dọn sớm) → cho lưu nếu chọn lý do.
+     - lịch trước: lịch mới bắt đầu trước khi lịch trước hết giữ chỗ (làm + dọn) không quá earlyMax phút
+     - lịch sau: lịch mới chỉ được lấn vào phần dọn của chính nó */
+  {
+    const EM=+cfg.earlyMax||30;
+    const prev=clash.filter(b=>b.start<t), next=clash.filter(b=>b.start>=t);
+    const okPrev=prev.every(b=>b.start+span(b)-t<=EM&&t+s.dur>b.start+b.dur);
+    const okNext=next.every(b=>b.start>=t+s.dur);
+    if(okPrev&&okNext){
+      const ownBuf=next.length?Math.max(0,Math.min(svcBuf(s),Math.min(...next.map(b=>b.start))-(t+s.dur))):svcBuf(s);
+      const cuts=prev.map(b=>{const dur=Math.min(b.dur,t-b.start);return{b,dur,buf:Math.max(0,t-b.start-dur)}});
+      const mins=Math.max(svcBuf(s)-ownBuf,...prev.map(b=>b.start+span(b)-t),0);
+      const early=Math.max(0,...prev.map(b=>b.start+b.dur-t));
+      r.soft={ownBuf,cuts,mins,early,em:EM};
+    }
   }
   const fs=freeSlots(kid,L,excl);
   r.after=fs.find(x=>x>t);r.before=fs.filter(x=>x<t).pop();r.freeList=fs;r.otherNear=nearestPerStaff(qualified.filter(x=>x.id!==kid),t,L,excl,6);
@@ -809,7 +817,7 @@ function renderCheck(ev){
   }
   const kn=esc(ev.k.name);
   h+=`<div class="ttl">⚠ ${kn} đang bận lúc ${hm(ev.t)}</div>`+ev.clash.map(b=>`<div>${kn} đang làm <b>${esc(b.customer)}</b> (${esc(b.serviceName)}) ${hm(b.start)}–${hm(b.start+b.dur)}${b.buf?", dọn xong "+hm(b.start+span(b)):""}.</div>`).join("")+notes;
-  if(ev.soft&&!readOnly)h+=`<div class="reco soft">⏱ Chỉ lấn vào <b>${ev.soft.mins} phút dọn</b>, không trùng giờ làm. Nếu thực tế ${kn} đã dọn xong sớm hoặc khách đến sớm, vẫn lưu được kèm lý do.<button type="button" class="recobtn" id="softBtn">Vẫn lưu với ${kn} lúc ${hm(ev.t)} – chọn lý do</button></div>`;
+  if(ev.soft&&!readOnly)h+=`<div class="reco soft">⏱ Sớm hơn giờ ${kn} rảnh <b>${ev.soft.mins} phút</b> (cho phép tối đa ${ev.soft.em} phút)${ev.soft.early?`, ${kn} phải xong khách trước sớm <b>${ev.soft.early} phút</b>`:", chỉ lấn vào thời gian dọn"}. Nếu thực tế ${kn} xong/dọn sớm hoặc khách đến sớm, vẫn lưu được kèm lý do.<button type="button" class="recobtn" id="softBtn">Vẫn lưu với ${kn} lúc ${hm(ev.t)} – chọn lý do</button></div>`;
   if(ev.after!=null||ev.before!=null){
     const main=ev.after!=null?ev.after:ev.before, late=main>ev.t;
     h+=`<div class="reco">👉 Nếu khách vẫn muốn <b>${kn}</b> làm: xin khách ${late?"lùi":"đến sớm"} sang <b>${hm(main)}</b> (${late?"muộn":"sớm"} ${Math.abs(main-ev.t)} phút)`+
@@ -888,7 +896,7 @@ async function saveBooking(force,reason){
   if(soft){b.buf=soft.ownBuf;b.bufReason=reason;b.bufOverlap=soft.mins}
   const btn=$("#saveBtn");btn.disabled=true;
   try{
-    if(soft)for(const x of soft.cuts){const nb=Object.assign({},x.b,{buf:x.buf,bufCut:(x.b.buf||0)-x.buf,bufCutReason:reason,updatedAt:Date.now()});delete nb.id;await store.updateBooking(x.b.id,nb)}
+    if(soft)for(const x of soft.cuts){const nb=Object.assign({},x.b,{dur:x.dur,buf:x.buf,bufCut:(x.b.buf||0)-x.buf,durCut:(x.b.dur||0)-x.dur,bufCutReason:reason,updatedAt:Date.now()});delete nb.id;await store.updateBooking(x.b.id,nb)}
     if(editingId)await store.updateBooking(editingId,b);else await store.addBooking(b);
     toast(`Đã lưu: ${cus} · ${ev.s.name} · ${k.name} ${hm(ev.t)}–${hm(ev.t+ev.s.dur)}`);
     resetForm();
@@ -925,7 +933,7 @@ function renderTimeline(ev){
     let inner="";
     for(const b of dayBookings.filter(x=>x.staffId===k.id)){
       const top=(b.start-o)*PX,h=Math.max(b.dur*PX,18);
-      inner+=`<div class="blk${clashes.has(b.id)||!inShift(b.staffId,b.start,b.dur)?" clash":""}" data-id="${esc(b.id)}" style="top:${top}px;height:${h}px;background:${colorFor(b.serviceId)}${editingIds.has(b.id)||b.id===editingId?";opacity:.35":""}" title="${esc(b.customer)} · ${esc(b.serviceName)}${b.note?" · "+esc(b.note):""}${b.bufReason?" · ⏱ lấn "+(b.bufOverlap||"")+"p dọn: "+esc(b.bufReason):""}"><div class="t">${hm(b.start)}–${hm(b.start+b.dur)}${b.parts>1?' <span class="tag-grp">DV'+b.part+'/'+b.parts+'</span>':""}</div>${esc(b.customer)} · ${esc(b.serviceName)}</div>`;
+      inner+=`<div class="blk${clashes.has(b.id)||!inShift(b.staffId,b.start,b.dur)?" clash":""}" data-id="${esc(b.id)}" style="top:${top}px;height:${h}px;background:${colorFor(b.serviceId)}${editingIds.has(b.id)||b.id===editingId?";opacity:.35":""}" title="${esc(b.customer)} · ${esc(b.serviceName)}${b.note?" · "+esc(b.note):""}${b.bufReason?" · ⏱ đặt sớm "+(b.bufOverlap||"")+"p: "+esc(b.bufReason):""}"><div class="t">${hm(b.start)}–${hm(b.start+b.dur)}${b.parts>1?' <span class="tag-grp">DV'+b.part+'/'+b.parts+'</span>':""}</div>${esc(b.customer)} · ${esc(b.serviceName)}</div>`;
       if(b.buf)inner+=`<div class="buf" style="top:${top+b.dur*PX}px;height:${b.buf*PX}px"></div>`;
     }
     if(ghosts)ghosts.filter(g=>g.staffId===k.id).forEach(g=>{inner+=`<div class="ghost${g.ok?"":" bad"}" style="top:${(g.start-o)*PX}px;height:${g.len*PX}px">${g.ok?"Lịch mới":"Vướng!"} ${hm(g.start)}</div>`});
@@ -949,7 +957,7 @@ function renderList(){
   $("#daystats").textContent=total+" lịch hẹn"+(clashes.size?" · ⚠ "+clashes.size+" lịch đang trùng":"")+(offB?" · ⚠ "+offB+" lịch ngoài giờ làm của KTV":"");
   if(!total){$("#list").innerHTML='<div class="empty">Chưa có lịch hẹn nào trong ngày này.</div>';return}
   $("#list").innerHTML=`<table class="list"><thead><tr><th>Giờ</th><th>Khách</th><th>Dịch vụ</th><th>KTV</th><th>Ghi chú</th><th></th></tr></thead><tbody>`+
-    rows.map(b=>{const k=stf(b.staffId);const off=outB(b);return `<tr class="${clashes.has(b.id)?"clash":(off?"offrow":"")}"><td><b>${hm(b.start)}</b>–${hm(b.start+b.dur)}</td><td>${esc(b.customer)}${b.phone?`<br><small style="color:var(--mute)">${esc(b.phone)}</small>`:""}</td><td>${esc(b.serviceName)}${b.parts>1?'<span class="tag-grp">DV'+b.part+'/'+b.parts+'</span>':""}</td><td>${esc(k?k.name:b.staffName+" (đã xoá)")}${off?'<span class="tag-off">'+(isOff(b.staffId)?"nghỉ":"ngoài giờ làm")+' – cần chuyển</span>':""}</td><td>${esc(b.note)}${b.bufReason?`<div class="tag-rsn">⏱ Lấn ${b.bufOverlap||""} phút dọn: ${esc(b.bufReason)}</div>`:""}</td><td><button class="btn small" data-edit="${esc(b.id)}">Sửa</button></td></tr>`}).join("")+"</tbody></table>";
+    rows.map(b=>{const k=stf(b.staffId);const off=outB(b);return `<tr class="${clashes.has(b.id)?"clash":(off?"offrow":"")}"><td><b>${hm(b.start)}</b>–${hm(b.start+b.dur)}</td><td>${esc(b.customer)}${b.phone?`<br><small style="color:var(--mute)">${esc(b.phone)}</small>`:""}</td><td>${esc(b.serviceName)}${b.parts>1?'<span class="tag-grp">DV'+b.part+'/'+b.parts+'</span>':""}</td><td>${esc(k?k.name:b.staffName+" (đã xoá)")}${off?'<span class="tag-off">'+(isOff(b.staffId)?"nghỉ":"ngoài giờ làm")+' – cần chuyển</span>':""}</td><td>${esc(b.note)}${b.bufReason?`<div class="tag-rsn">⏱ Đặt sớm ${b.bufOverlap||""} phút: ${esc(b.bufReason)}</div>`:""}</td><td><button class="btn small" data-edit="${esc(b.id)}">Sửa</button></td></tr>`}).join("")+"</tbody></table>";
 }
 let attPick=null;
 function renderAtt(){
@@ -1073,7 +1081,7 @@ let editReason="";
 function openReason(ev){
   ev=ev||evaluate();if(!ev.soft||readOnly)return;
   const m=$("#rsn");
-  $("#rsn-desc").innerHTML=`<b>${esc(ev.k.name)}</b> nhận khách lúc <b>${hm(ev.t)}</b>, lấn ${ev.soft.mins} phút vào thời gian dọn. Chọn lý do:`;
+  $("#rsn-desc").innerHTML=`<b>${esc(ev.k.name)}</b> nhận khách lúc <b>${hm(ev.t)}</b>, sớm ${ev.soft.mins} phút so với giờ rảnh${ev.soft.early?` (khách trước phải xong sớm ${ev.soft.early} phút)`:""}. Chọn lý do:`;
   const parts=editReason?editReason.split(" · "):[];
   m.querySelectorAll("input[data-r]").forEach(c=>{c.checked=parts.includes(c.dataset.r)});
   const other=parts.filter(x=>!["KTV đã dọn xong sớm","Khách đến sớm / làm xong sớm"].includes(x)).map(x=>x.replace(/^Khác: /,"")).join(" · ");
